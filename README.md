@@ -7,4 +7,4 @@ Es werden drei Rollen unterschieden:
 - **Passenger**: Kann Fahrten suchen und Mitfahranfragen stellen.  
 - **Admin**: Kann das System überwachen (optional).
 
-![Use Case Diagramm](doc/doc/use-case-shareway.drawio.svg)
+![Use Case Diagramm](doc/use-case-shareway.drawio.svg)
