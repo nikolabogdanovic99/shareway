@@ -24,24 +24,39 @@ public class RideController {
     @Autowired
     RideRepository rideRepository;
 
+    // POST /api/rides - Neue Fahrt erstellen (AKTUALISIERT!)
     @PostMapping("/rides")
     public ResponseEntity<Ride> createRide(@RequestBody RideCreateDTO dto) {
+        // seatsFree = seatsTotal bei Erstellung
+        Integer seatsFree = dto.getSeatsTotal();
+        
         Ride ride = new Ride(
+            dto.getDriverId(),
+            dto.getVehicleId(),
             dto.getStartLocation(),
             dto.getEndLocation(),
-            dto.getDateTime(),
-            dto.getSeatsAvailable()
+            dto.getDepartureTime(),
+            dto.getPricePerSeat(),
+            dto.getSeatsTotal(),
+            seatsFree
         );
+        
+        // Optional: routeRadiusKm, distanceKm, durationMinutes
+        // status = OPEN (default)
+        // createdAt = now (default)
+        
         Ride savedRide = rideRepository.save(ride);
         return new ResponseEntity<>(savedRide, HttpStatus.CREATED);
     }
 
+    // GET /api/rides - Alle Fahrten
     @GetMapping("/rides")
     public ResponseEntity<List<Ride>> getAllRides() {
         List<Ride> allRides = rideRepository.findAll();
         return new ResponseEntity<>(allRides, HttpStatus.OK);
     }
 
+    // GET /api/rides/{id} - Fahrt by ID
     @GetMapping("/rides/{id}")
     public ResponseEntity<Ride> getRideById(@PathVariable String id) {
         Optional<Ride> optRide = rideRepository.findById(id);
