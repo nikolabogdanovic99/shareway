@@ -1,0 +1,272 @@
+[
+  {
+    "ownerId": "7",
+    "make": "Mazda",
+    "model": "MX-6",
+    "seats": 4,
+    "plateHash": "ZH 12345",
+    "color": "Blue",
+    "year": 2022
+  },
+  {
+    "ownerId": "1",
+    "make": "Toyota",
+    "model": "Celica",
+    "seats": 2,
+    "plateHash": "ZH 12345",
+    "color": "Pink",
+    "year": 2021
+  },
+  {
+    "ownerId": "13",
+    "make": "Toyota",
+    "model": "MR2",
+    "seats": 2,
+    "plateHash": "BE 54321",
+    "color": "Turquoise",
+    "year": 2025
+  },
+  {
+    "ownerId": "1",
+    "make": "Volvo",
+    "model": "S60",
+    "seats": 3,
+    "plateHash": "BE 54321",
+    "color": "Crimson",
+    "year": 2024
+  },
+  {
+    "ownerId": "48",
+    "make": "Mercury",
+    "model": "Mountaineer",
+    "seats": 6,
+    "plateHash": "ZH 12345",
+    "color": "Goldenrod",
+    "year": 2024
+  },
+  {
+    "ownerId": "21",
+    "make": "Suzuki",
+    "model": "SJ",
+    "seats": 3,
+    "plateHash": "BE 54321",
+    "color": "Crimson",
+    "year": 2017
+  },
+  {
+    "ownerId": "27",
+    "make": "Austin",
+    "model": "Mini Cooper",
+    "seats": 7,
+    "plateHash": "BE 54321",
+    "color": "Red",
+    "year": 2025
+  },
+  {
+    "ownerId": "22",
+    "make": "Audi",
+    "model": "S4",
+    "seats": 4,
+    "plateHash": "AG 67890",
+    "color": "Indigo",
+    "year": 2018
+  },
+  {
+    "ownerId": "34",
+    "make": "Jaguar",
+    "model": "XJ",
+    "seats": 5,
+    "plateHash": "TI 24680",
+    "color": "Turquoise",
+    "year": 2020
+  },
+  {
+    "ownerId": "30",
+    "make": "Mitsubishi",
+    "model": "Diamante",
+    "seats": 4,
+    "plateHash": "BE 54321",
+    "color": "Maroon",
+    "year": 2019
+  },
+  {
+    "ownerId": "3",
+    "make": "Mercedes-Benz",
+    "model": "G-Class",
+    "seats": 7,
+    "plateHash": "ZH 12345",
+    "color": "Goldenrod",
+    "year": 2023
+  },
+  {
+    "ownerId": "44",
+    "make": "Audi",
+    "model": "S5",
+    "seats": 7,
+    "plateHash": "AG 67890",
+    "color": "Khaki",
+    "year": 2022
+  },
+  {
+    "ownerId": "8",
+    "make": "Volvo",
+    "model": "XC60",
+    "seats": 6,
+    "plateHash": "ZH 12345",
+    "color": "Turquoise",
+    "year": 2019
+  },
+  {
+    "ownerId": "50",
+    "make": "Ford",
+    "model": "Econoline E250",
+    "seats": 4,
+    "plateHash": "VD 98765",
+    "color": "Red",
+    "year": 2015
+  },
+  {
+    "ownerId": "24",
+    "make": "Honda",
+    "model": "Odyssey",
+    "seats": 5,
+    "plateHash": "AG 67890",
+    "color": "Maroon",
+    "year": 2025
+  },
+  {
+    "ownerId": "41",
+    "make": "Jaguar",
+    "model": "XJ Series",
+    "seats": 3,
+    "plateHash": "AG 67890",
+    "color": "Green",
+    "year": 2021
+  },
+  {
+    "ownerId": "21",
+    "make": "Ram",
+    "model": "2500",
+    "seats": 2,
+    "plateHash": "AG 67890",
+    "color": "Violet",
+    "year": 2025
+  },
+  {
+    "ownerId": "24",
+    "make": "Mercury",
+    "model": "Cougar",
+    "seats": 4,
+    "plateHash": "ZH 12345",
+    "color": "Purple",
+    "year": 2019
+  },
+  {
+    "ownerId": "11",
+    "make": "Ford",
+    "model": "Flex",
+    "seats": 5,
+    "plateHash": "BE 54321",
+    "color": "Red",
+    "year": 2021
+  },
+  {
+    "ownerId": "21",
+    "make": "Chevrolet",
+    "model": "Suburban 2500",
+    "seats": 5,
+    "plateHash": "ZH 12345",
+    "color": "Yellow",
+    "year": 2019
+  },
+  {
+    "ownerId": "15",
+    "make": "Honda",
+    "model": "Element",
+    "seats": 3,
+    "plateHash": "VD 98765",
+    "color": "Yellow",
+    "year": 2019
+  },
+  {
+    "ownerId": "30",
+    "make": "Nissan",
+    "model": "Quest",
+    "seats": 4,
+    "plateHash": "BE 54321",
+    "color": "Green",
+    "year": 2023
+  },
+  {
+    "ownerId": "29",
+    "make": "Saab",
+    "model": "9-5",
+    "seats": 3,
+    "plateHash": "BE 54321",
+    "color": "Puce",
+    "year": 2022
+  },
+  {
+    "ownerId": "5",
+    "make": "Land Rover",
+    "model": "LR2",
+    "seats": 6,
+    "plateHash": "BE 54321",
+    "color": "Yellow",
+    "year": 2024
+  },
+  {
+    "ownerId": "35",
+    "make": "Ford",
+    "model": "Freestyle",
+    "seats": 2,
+    "plateHash": "ZH 12345",
+    "color": "Teal",
+    "year": 2023
+  },
+  {
+    "ownerId": "3",
+    "make": "Toyota",
+    "model": "Sienna",
+    "seats": 3,
+    "plateHash": "AG 67890",
+    "color": "Khaki",
+    "year": 2020
+  },
+  {
+    "ownerId": "39",
+    "make": "Dodge",
+    "model": "Dakota Club",
+    "seats": 4,
+    "plateHash": "AG 67890",
+    "color": "Green",
+    "year": 2022
+  },
+  {
+    "ownerId": "38",
+    "make": "Nissan",
+    "model": "Frontier",
+    "seats": 7,
+    "plateHash": "VD 98765",
+    "color": "Purple",
+    "year": 2019
+  },
+  {
+    "ownerId": "4",
+    "make": "GMC",
+    "model": "Sonoma",
+    "seats": 4,
+    "plateHash": "VD 98765",
+    "color": "Mauv",
+    "year": 2022
+  },
+  {
+    "ownerId": "13",
+    "make": "Mazda",
+    "model": "MPV",
+    "seats": 5,
+    "plateHash": "AG 67890",
+    "color": "Mauv",
+    "year": 2022
+  }
+]
