@@ -22,9 +22,7 @@ Es werden drei Benutzerrollen unterschieden:
 
 Unsere ShareWay App bietet verschiedene Use Cases für 3 Akteurstypen:
 
-![Use Case Diagram](doc/use-case-diagram.png)
-
-Siehe auch: [Use Case Diagram Details](doc/use-case-diagram.md)
+![Use Case Diagram](doc/use-case-shareway.drawio.svg)
 
 ### Wichtige Use Cases:
 - **Fahrt suchen/buchen**: Rider findet passende Fahrten nach Kriterien
@@ -43,9 +41,7 @@ Unser Datenmodell besteht aus 5 Entitäten mit Referenced-Beziehungen:
 - **Booking**: Riders buchen Plätze auf Rides
 - **Review**: Bidirektionales Bewertungssystem nach Fahrten
 
-![ER Diagram](doc/er-diagram-shareway.png)
-
-Siehe auch: [ER Diagram Details](doc/er-diagram-shareway.md)
+![ER Diagram](doc/er-diagram-shareway.drawio.svg)
 
 ### Beziehungen:
 - User 1:N Vehicle (ownerId)
