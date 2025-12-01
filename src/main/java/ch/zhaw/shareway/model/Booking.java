@@ -9,29 +9,31 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;  // ← NEU!
 
 @Document("bookings")
 @NoArgsConstructor
 @RequiredArgsConstructor
 @Getter
+@Setter  // ← NEU! Generiert alle Setter-Methoden
 public class Booking {
     @Id
     private String id;
     
     @NonNull
-    private String rideId; // Referenz zu Ride
+    private String rideId;
     
     @NonNull
-    private String riderId; // Referenz zu User (Mitfahrer)
+    private String riderId;
     
     @NonNull
-    private Integer seats; // Anzahl gebuchte Plätze
+    private Integer seats;
     
-    private BookingStatus status = BookingStatus.REQUESTED; // Status (Enum!)
+    private BookingStatus status = BookingStatus.REQUESTED;
     
-    private String message; // Nachricht an Driver (optional)
+    private String message;
     
-    private LocalDateTime createdAt = LocalDateTime.now(); // Erstellungszeitpunkt
+    private LocalDateTime createdAt = LocalDateTime.now();
     
-    private LocalDateTime updatedAt; // Letzte Änderung (optional)
+    private LocalDateTime updatedAt;
 }

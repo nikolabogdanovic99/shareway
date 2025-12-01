@@ -9,48 +9,50 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;  // ← NEU!
 
 @Document("rides")
 @NoArgsConstructor
 @RequiredArgsConstructor
 @Getter
+@Setter  // ← NEU! Generiert alle Setter-Methoden
 public class Ride {
     @Id
     private String id;
 
     @NonNull
-    private String driverId; // Referenz zu User (muss DRIVER sein)
+    private String driverId;
 
     @NonNull
-    private String vehicleId; // Referenz zu Vehicle
+    private String vehicleId;
 
     @NonNull
-    private String startLocation; // z.B. "Zürich HB"
+    private String startLocation;
 
     @NonNull
-    private String endLocation; // z.B. "Bern HB"
+    private String endLocation;
 
     @NonNull
-    private LocalDateTime departureTime; // Abfahrtszeit
+    private LocalDateTime departureTime;
 
     @NonNull
-    private Double pricePerSeat; // Preis pro Platz (berechnet)
+    private Double pricePerSeat;
 
     @NonNull
-    private Integer seatsTotal; // Gesamtanzahl Plätze
+    private Integer seatsTotal;
 
     @NonNull
-    private Integer seatsFree; // Freie Plätze
+    private Integer seatsFree;
 
-    private RideStatus status = RideStatus.OPEN; // Status (Enum!)
+    private RideStatus status = RideStatus.OPEN;
 
-    private String description; // Beschreibung (optional, später KI-moderiert)
+    private String description;
 
-    private Double routeRadiusKm = 5.0; // WOW-Feature! Umwegsbereitschaft
+    private Double routeRadiusKm = 5.0;
 
-    private Double distanceKm; // Distanz in km (optional)
+    private Double distanceKm;
 
-    private Integer durationMinutes; // Dauer in Minuten (optional)
+    private Integer durationMinutes;
 
-    private LocalDateTime createdAt = LocalDateTime.now(); // Erstellungszeitpunkt
+    private LocalDateTime createdAt = LocalDateTime.now();
 }

@@ -3,54 +3,55 @@ package ch.zhaw.shareway.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import ch.zhaw.shareway.model.Ride;
 import ch.zhaw.shareway.model.RideStatus;
+import ch.zhaw.shareway.model.RideStatusAggregationDTO;
 
+/**
+ * Repository interface for Ride entity
+ * Provides CRUD operations and custom queries
+ */
 public interface RideRepository extends MongoRepository<Ride, String> {
     
-    // ✅ Query-Methoden für Filter (wie in Übung 3 mit findByEarningsGreaterThan)
+    // ========== BASIC QUERIES ==========
     
-    // Filter nach Status
     List<Ride> findByStatus(RideStatus status);
-    
-    // Filter nach Preis (maxPrice)
     List<Ride> findByPricePerSeatLessThanEqual(Double maxPrice);
-    
-    // Filter nach freien Plätzen (minSeats)
     List<Ride> findBySeatsFreeGreaterThanEqual(Integer minSeats);
-    
-    // Filter nach Startort
     List<Ride> findByStartLocationContainingIgnoreCase(String location);
-    
-    // Filter nach Zielort
     List<Ride> findByEndLocationContainingIgnoreCase(String location);
-    
-    // Filter nach Datum (zwischen zwei Zeitpunkten)
     List<Ride> findByDepartureTimeBetween(LocalDateTime start, LocalDateTime end);
-    
-    // Filter nach Driver
     List<Ride> findByDriverId(String driverId);
     
-    // ✅ Kombinierte Filter (wie in Übung 3 mit "And")
-    
-    // Status + minSeats
-    List<Ride> findByStatusAndSeatsFreeGreaterThanEqual(
-        RideStatus status, 
-        Integer minSeats
-    );
-    
-    // Status + maxPrice
-    List<Ride> findByStatusAndPricePerSeatLessThanEqual(
-        RideStatus status,
-        Double maxPrice
-    );
-    
-    // Status + minSeats + maxPrice (alle 3!)
+    // Combined filters
+    List<Ride> findByStatusAndSeatsFreeGreaterThanEqual(RideStatus status, Integer minSeats);
+    List<Ride> findByStatusAndPricePerSeatLessThanEqual(RideStatus status, Double maxPrice);
     List<Ride> findByStatusAndPricePerSeatLessThanEqualAndSeatsFreeGreaterThanEqual(
-        RideStatus status,
-        Double maxPrice,
-        Integer minSeats
-    );
+        RideStatus status, Double maxPrice, Integer minSeats);
+    
+    // ========== AGGREGATION PIPELINE  ==========
+    
+    /**
+     * Aggregation pipeline for driver dashboard
+     * Groups rides by status with count and list of IDs
+     * 
+     * Pipeline stages:
+     * 1. $match: Filter rides by driverId
+     * 2. $group: Group by status, count documents, collect IDs
+     * 
+     * @param driverId The driver ID to filter by
+     * @return List of aggregation results with status, count, and rideIds
+     */
+    @Aggregation({
+        "{'$match': {'driverId': ?0}}",
+        "{'$group': {" +
+            "'_id': '$status', " +
+            "'count': {'$sum': 1}, " +
+            "'rideIds': {'$push': {'$toString': '$_id'}}" +
+        "}}"
+    })
+    List<RideStatusAggregationDTO> getRidesDashboardForDriver(String driverId);
 }
