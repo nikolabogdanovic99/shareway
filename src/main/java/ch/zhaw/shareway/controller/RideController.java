@@ -20,11 +20,8 @@ import ch.zhaw.shareway.model.RideCreateDTO;
 import ch.zhaw.shareway.model.RideStatus;
 import ch.zhaw.shareway.repository.RideRepository;
 import ch.zhaw.shareway.service.RideService;
+import ch.zhaw.shareway.service.UserService;
 
-/**
- * REST Controller for Ride endpoints
- * Handles CRUD operations for rides with filtering
- */
 @RestController
 @RequestMapping("/api")
 public class RideController {
@@ -33,20 +30,19 @@ public class RideController {
     private RideRepository rideRepository;
     
     @Autowired
-    private RideService rideService;  // NEW: Service injection for validation
+    private RideService rideService;
     
-    /**
-     * Create new ride with vehicle validation
-     * POST /api/rides
-     * 
-     * BUG FIX: Now validates that vehicle exists and belongs to driver
-     * 
-     * @param rideDTO The ride data to create
-     * @return CREATED with ride data, or BAD_REQUEST if validation fails
-     */
+    @Autowired
+    private UserService userService;
+
     @PostMapping("/rides")
     public ResponseEntity<Ride> createRide(@RequestBody RideCreateDTO rideDTO) {
-        // BUG FIX: Validate vehicle exists and belongs to driver
+        // Nur driver oder admin dürfen Rides erstellen
+        if (!userService.userHasRole("driver") && !userService.userHasRole("admin")) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        
+        // Validate vehicle exists and belongs to driver
         if (!rideService.validateVehicleForDriver(
             rideDTO.getVehicleId(), 
             rideDTO.getDriverId()
@@ -62,24 +58,13 @@ public class RideController {
             rideDTO.getDepartureTime(),
             rideDTO.getPricePerSeat(),
             rideDTO.getSeatsTotal(),
-            rideDTO.getSeatsTotal()  // seatsFree = seatsTotal initially
+            rideDTO.getSeatsTotal()
         );
         
         Ride savedRide = rideRepository.save(ride);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedRide);
     }
     
-    /**
-     * Get all rides with optional filters
-     * GET /api/rides?status=...&maxPrice=...&minSeats=...&startLocation=...&endLocation=...
-     * 
-     * @param status Filter by ride status (OPEN, FULL, IN_PROGRESS, COMPLETED, CANCELLED)
-     * @param maxPrice Filter by maximum price per seat
-     * @param minSeats Filter by minimum free seats
-     * @param startLocation Filter by start location (case-insensitive partial match)
-     * @param endLocation Filter by end location (case-insensitive partial match)
-     * @return List of rides matching the filters
-     */
     @GetMapping("/rides")
     public ResponseEntity<List<Ride>> getAllRides(
         @RequestParam(required = false) RideStatus status,
@@ -90,7 +75,6 @@ public class RideController {
     ) {
         List<Ride> rides;
         
-        // Filter logic (from Übung 3)
         if (status != null && maxPrice != null && minSeats != null) {
             rides = rideRepository.findByStatusAndPricePerSeatLessThanEqualAndSeatsFreeGreaterThanEqual(
                 status, maxPrice, minSeats);
@@ -115,13 +99,6 @@ public class RideController {
         return ResponseEntity.ok(rides);
     }
     
-    /**
-     * Get ride by ID
-     * GET /api/rides/{id}
-     * 
-     * @param id The ride ID
-     * @return The ride or NOT_FOUND
-     */
     @GetMapping("/rides/{id}")
     public ResponseEntity<Ride> getRideById(@PathVariable String id) {
         Optional<Ride> ride = rideRepository.findById(id);
@@ -131,13 +108,6 @@ public class RideController {
         return ResponseEntity.notFound().build();
     }
     
-    /**
-     * Delete ride by ID
-     * DELETE /api/rides/{id}
-     * 
-     * @param id The ride ID to delete
-     * @return NO_CONTENT if deleted, NOT_FOUND if ride doesn't exist
-     */
     @DeleteMapping("/rides/{id}")
     public ResponseEntity<Void> deleteRide(@PathVariable String id) {
         Optional<Ride> ride = rideRepository.findById(id);

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ch.zhaw.shareway.model.Vehicle;
 import ch.zhaw.shareway.model.VehicleCreateDTO;
 import ch.zhaw.shareway.repository.VehicleRepository;
+import ch.zhaw.shareway.service.UserService;
 
 @RestController
 @RequestMapping("/api")
@@ -24,18 +25,24 @@ public class VehicleController {
     @Autowired
     VehicleRepository vehicleRepository;
 
+    @Autowired
+    UserService userService;
+
     // POST /api/vehicles - Neues Fahrzeug erstellen
     @PostMapping("/vehicles")
     public ResponseEntity<Vehicle> createVehicle(@RequestBody VehicleCreateDTO dto) {
+        // Nur driver oder admin dürfen Vehicles erstellen
+        if (!userService.userHasRole("driver") && !userService.userHasRole("admin")) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
         Vehicle vehicle = new Vehicle(
-            dto.getOwnerId(),
-            dto.getMake(),
-            dto.getModel(),
-            dto.getSeats(),
-            dto.getPlateHash()
-        );
-        // color und year sind optional
-        
+                dto.getOwnerId(),
+                dto.getMake(),
+                dto.getModel(),
+                dto.getSeats(),
+                dto.getPlateHash());
+
         Vehicle savedVehicle = vehicleRepository.save(vehicle);
         return new ResponseEntity<>(savedVehicle, HttpStatus.CREATED);
     }
