@@ -29,6 +29,11 @@
           <li class="nav-item">
             <a class="nav-link" aria-current="page" href="/rides">Rides</a>
           </li>
+          {#if user.user_roles && (user.user_roles.includes("driver") || user.user_roles.includes("admin"))}
+            <li class="nav-item">
+              <a class="nav-link" href="/rides/create">Create Ride</a>
+            </li>
+          {/if}
           <li class="nav-item">
             <a class="nav-link" href="/account">Account</a>
           </li>
