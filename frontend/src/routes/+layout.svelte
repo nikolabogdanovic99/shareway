@@ -31,7 +31,7 @@
           </li>
           {#if user.user_roles && (user.user_roles.includes("driver") || user.user_roles.includes("admin"))}
             <li class="nav-item">
-              <a class="nav-link" href="/rides/create">Create Ride</a>
+              <a class="nav-link" href="/vehicles">My Vehicles</a>
             </li>
           {/if}
           <li class="nav-item">
