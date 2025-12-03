@@ -25,13 +25,13 @@ import ch.zhaw.shareway.service.UserService;
 @RestController
 @RequestMapping("/api")
 public class RideController {
-    
+
     @Autowired
     private RideRepository rideRepository;
-    
+
     @Autowired
     private RideService rideService;
-    
+
     @Autowired
     private UserService userService;
 
@@ -41,43 +41,40 @@ public class RideController {
         if (!userService.userHasRole("driver") && !userService.userHasRole("admin")) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
-        
+
         // Validate vehicle exists and belongs to driver
         if (!rideService.validateVehicleForDriver(
-            rideDTO.getVehicleId(), 
-            rideDTO.getDriverId()
-        )) {
+                rideDTO.getVehicleId(),
+                rideDTO.getDriverId())) {
             return ResponseEntity.badRequest().build();
         }
-        
+
         Ride ride = new Ride(
-            rideDTO.getDriverId(),
-            rideDTO.getVehicleId(),
-            rideDTO.getStartLocation(),
-            rideDTO.getEndLocation(),
-            rideDTO.getDepartureTime(),
-            rideDTO.getPricePerSeat(),
-            rideDTO.getSeatsTotal(),
-            rideDTO.getSeatsTotal()
-        );
-        
+                rideDTO.getDriverId(),
+                rideDTO.getVehicleId(),
+                rideDTO.getStartLocation(),
+                rideDTO.getEndLocation(),
+                rideDTO.getDepartureTime(),
+                rideDTO.getPricePerSeat(),
+                rideDTO.getSeatsTotal(),
+                rideDTO.getSeatsTotal());
+
         Ride savedRide = rideRepository.save(ride);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedRide);
     }
-    
+
     @GetMapping("/rides")
     public ResponseEntity<List<Ride>> getAllRides(
-        @RequestParam(required = false) RideStatus status,
-        @RequestParam(required = false) Double maxPrice,
-        @RequestParam(required = false) Integer minSeats,
-        @RequestParam(required = false) String startLocation,
-        @RequestParam(required = false) String endLocation
-    ) {
+            @RequestParam(required = false) RideStatus status,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) Integer minSeats,
+            @RequestParam(required = false) String startLocation,
+            @RequestParam(required = false) String endLocation) {
         List<Ride> rides;
-        
+
         if (status != null && maxPrice != null && minSeats != null) {
             rides = rideRepository.findByStatusAndPricePerSeatLessThanEqualAndSeatsFreeGreaterThanEqual(
-                status, maxPrice, minSeats);
+                    status, maxPrice, minSeats);
         } else if (status != null && minSeats != null) {
             rides = rideRepository.findByStatusAndSeatsFreeGreaterThanEqual(status, minSeats);
         } else if (status != null && maxPrice != null) {
@@ -95,10 +92,10 @@ public class RideController {
         } else {
             rides = rideRepository.findAll();
         }
-        
+
         return ResponseEntity.ok(rides);
     }
-    
+
     @GetMapping("/rides/{id}")
     public ResponseEntity<Ride> getRideById(@PathVariable String id) {
         Optional<Ride> ride = rideRepository.findById(id);
@@ -107,16 +104,25 @@ public class RideController {
         }
         return ResponseEntity.notFound().build();
     }
-    
+
     @DeleteMapping("/rides/{id}")
-    public ResponseEntity<Void> deleteRide(@PathVariable String id) {
+    public ResponseEntity<String> deleteRide(@PathVariable String id) {
         Optional<Ride> ride = rideRepository.findById(id);
-        
+
         if (ride.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        
+
+        // Admin darf alle löschen, Driver nur eigene
+        String userEmail = userService.getEmail();
+        boolean isAdmin = userService.userHasRole("admin");
+        boolean isOwnRide = ride.get().getDriverId().equals(userEmail);
+
+        if (!isAdmin && !isOwnRide) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
         rideRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.status(HttpStatus.OK).body("DELETED");
     }
 }

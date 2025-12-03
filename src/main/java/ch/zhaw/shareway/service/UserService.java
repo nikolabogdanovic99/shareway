@@ -16,4 +16,9 @@ public class UserService {
         }
         return false;
     }
+
+    public String getEmail() {
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return jwt.getClaimAsString("email");
+    }
 }
