@@ -33,6 +33,9 @@
             <li class="nav-item">
               <a class="nav-link" href="/vehicles">My Vehicles</a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/rides/create">Create Ride</a>
+            </li>
           {/if}
           <li class="nav-item">
             <a class="nav-link" href="/account">Account</a>

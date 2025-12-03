@@ -12,7 +12,9 @@ export async function load({ url, locals }) {
         return {
             rides: [],
             users: [],
-            myBookings: []
+            myBookings: [],
+            nrOfPages: 0,
+            currentPage: 1
         };
     }
     
@@ -60,7 +62,9 @@ export async function load({ url, locals }) {
         return {
             rides: [],
             users: [],
-            myBookings: []
+            myBookings: [],
+            nrOfPages: 0,
+            currentPage: 1
         };
     }
 }
