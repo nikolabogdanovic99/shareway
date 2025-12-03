@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -20,6 +21,7 @@ import ch.zhaw.shareway.model.RideStatusAggregationDTO;
 import ch.zhaw.shareway.repository.RideRepository;
 import ch.zhaw.shareway.service.BookingService;
 import ch.zhaw.shareway.service.RideService;
+import ch.zhaw.shareway.service.UserService;
 
 /**
  * Controller for service-related endpoints
@@ -28,89 +30,122 @@ import ch.zhaw.shareway.service.RideService;
 @RestController
 @RequestMapping("/api/service")
 public class RideServiceController {
-    
+
     @Autowired
     private RideService rideService;
-    
+
     @Autowired
     private BookingService bookingService;
-    
+
     @Autowired
     private RideRepository rideRepository;
-    
+
+    @Autowired
+    private UserService userService;
+
     /**
-     * Complete a ride (Driver only)
+     * Complete a ride (Admin only)
      * PUT /api/service/rides/complete
-     * 
-     * @param dto Contains rideId and driverId
-     * @return The completed ride or BAD_REQUEST if validation fails
      */
     @PutMapping("/rides/complete")
     public ResponseEntity<Ride> completeRide(@RequestBody RideCompleteDTO dto) {
+        if (!userService.userHasRole("admin")) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
         Optional<Ride> ride = rideService.completeRide(dto.getRideId(), dto.getDriverId());
-        
+
         if (ride.isPresent()) {
             return ResponseEntity.ok(ride.get());
         }
-        
+
         return ResponseEntity.badRequest().build();
     }
-    
+
     /**
-     * Approve a booking (Driver only)
+     * Complete own ride (Driver)
+     * PUT /api/service/me/completeride?rideId=...
+     */
+    @PutMapping("/me/completeride")
+    public ResponseEntity<Ride> completeMyRide(@RequestParam String rideId) {
+        String userEmail = userService.getEmail();
+        Optional<Ride> ride = rideService.completeRide(rideId, userEmail);
+
+        if (ride.isPresent()) {
+            return ResponseEntity.ok(ride.get());
+        }
+
+        return ResponseEntity.badRequest().build();
+    }
+
+    /**
+     * Book a ride for myself (Rider)
+     * PUT /api/service/me/bookride?rideId=...&seats=...
+     */
+    @PutMapping("/me/bookride")
+    public ResponseEntity<Booking> bookRideForMe(
+            @RequestParam String rideId,
+            @RequestParam(defaultValue = "1") int seats) {
+        String userEmail = userService.getEmail();
+        Optional<Booking> booking = bookingService.createBooking(rideId, userEmail, seats);
+
+        if (booking.isPresent()) {
+            return ResponseEntity.ok(booking.get());
+        }
+
+        return ResponseEntity.badRequest().build();
+    }
+
+    /**
+     * Approve a booking (Admin only)
      * PUT /api/service/bookings/approve
-     * 
-     * @param dto Contains bookingId and driverId
-     * @return The approved booking or BAD_REQUEST if validation fails
      */
     @PutMapping("/bookings/approve")
     public ResponseEntity<Booking> approveBooking(@RequestBody BookingActionDTO dto) {
+        if (!userService.userHasRole("admin")) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
         Optional<Booking> booking = bookingService.approveBooking(
-            dto.getBookingId(), 
-            dto.getDriverId()
-        );
-        
+                dto.getBookingId(),
+                dto.getDriverId());
+
         if (booking.isPresent()) {
             return ResponseEntity.ok(booking.get());
         }
-        
+
         return ResponseEntity.badRequest().build();
     }
-    
+
     /**
-     * Reject a booking (Driver only)
+     * Reject a booking (Admin only)
      * PUT /api/service/bookings/reject
-     * 
-     * @param dto Contains bookingId and driverId
-     * @return The rejected booking or BAD_REQUEST if validation fails
      */
     @PutMapping("/bookings/reject")
     public ResponseEntity<Booking> rejectBooking(@RequestBody BookingActionDTO dto) {
+        if (!userService.userHasRole("admin")) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
         Optional<Booking> booking = bookingService.rejectBooking(
-            dto.getBookingId(), 
-            dto.getDriverId()
-        );
-        
+                dto.getBookingId(),
+                dto.getDriverId());
+
         if (booking.isPresent()) {
             return ResponseEntity.ok(booking.get());
         }
-        
+
         return ResponseEntity.badRequest().build();
     }
-    
+
     /**
      * Get driver dashboard with rides grouped by status
      * GET /api/service/dashboard/driver?driverId=...
-     * 
-     * @param driverId The driver ID to get dashboard for
-     * @return List of aggregated ride statistics grouped by status
      */
     @GetMapping("/dashboard/driver")
     public ResponseEntity<List<RideStatusAggregationDTO>> getDriverDashboard(
-        @RequestParam String driverId
-    ) {
-        List<RideStatusAggregationDTO> dashboard = 
-            rideRepository.getRidesDashboardForDriver(driverId);
+            @RequestParam String driverId) {
+        List<RideStatusAggregationDTO> dashboard = rideRepository.getRidesDashboardForDriver(driverId);
         return ResponseEntity.ok(dashboard);
     }
 }

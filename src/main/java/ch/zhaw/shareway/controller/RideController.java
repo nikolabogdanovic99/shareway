@@ -1,9 +1,10 @@
 package ch.zhaw.shareway.controller;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,6 +22,7 @@ import ch.zhaw.shareway.model.RideStatus;
 import ch.zhaw.shareway.repository.RideRepository;
 import ch.zhaw.shareway.service.RideService;
 import ch.zhaw.shareway.service.UserService;
+
 
 @RestController
 @RequestMapping("/api")
@@ -64,36 +66,27 @@ public class RideController {
     }
 
     @GetMapping("/rides")
-    public ResponseEntity<List<Ride>> getAllRides(
+    public ResponseEntity<Page<Ride>> getAllRides(
             @RequestParam(required = false) RideStatus status,
             @RequestParam(required = false) Double maxPrice,
-            @RequestParam(required = false) Integer minSeats,
-            @RequestParam(required = false) String startLocation,
-            @RequestParam(required = false) String endLocation) {
-        List<Ride> rides;
+            @RequestParam(required = false, defaultValue = "1") Integer pageNumber,
+            @RequestParam(required = false, defaultValue = "5") Integer pageSize) {
 
-        if (status != null && maxPrice != null && minSeats != null) {
-            rides = rideRepository.findByStatusAndPricePerSeatLessThanEqualAndSeatsFreeGreaterThanEqual(
-                    status, maxPrice, minSeats);
-        } else if (status != null && minSeats != null) {
-            rides = rideRepository.findByStatusAndSeatsFreeGreaterThanEqual(status, minSeats);
+        Page<Ride> rides;
+
+        if (status == null && maxPrice == null) {
+            rides = rideRepository.findAll(PageRequest.of(pageNumber - 1, pageSize));
         } else if (status != null && maxPrice != null) {
-            rides = rideRepository.findByStatusAndPricePerSeatLessThanEqual(status, maxPrice);
-        } else if (status != null) {
-            rides = rideRepository.findByStatus(status);
+            rides = rideRepository.findByStatusAndPricePerSeatLessThanEqual(status, maxPrice,
+                    PageRequest.of(pageNumber - 1, pageSize));
         } else if (maxPrice != null) {
-            rides = rideRepository.findByPricePerSeatLessThanEqual(maxPrice);
-        } else if (minSeats != null) {
-            rides = rideRepository.findBySeatsFreeGreaterThanEqual(minSeats);
-        } else if (startLocation != null) {
-            rides = rideRepository.findByStartLocationContainingIgnoreCase(startLocation);
-        } else if (endLocation != null) {
-            rides = rideRepository.findByEndLocationContainingIgnoreCase(endLocation);
+            rides = rideRepository.findByPricePerSeatLessThanEqual(maxPrice,
+                    PageRequest.of(pageNumber - 1, pageSize));
         } else {
-            rides = rideRepository.findAll();
+            rides = rideRepository.findByStatus(status, PageRequest.of(pageNumber - 1, pageSize));
         }
 
-        return ResponseEntity.ok(rides);
+        return new ResponseEntity<>(rides, HttpStatus.OK);
     }
 
     @GetMapping("/rides/{id}")

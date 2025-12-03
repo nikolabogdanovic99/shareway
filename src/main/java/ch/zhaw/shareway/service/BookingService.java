@@ -27,6 +27,45 @@ public class BookingService {
     private RideRepository rideRepository;
     
     /**
+     * Create a booking for a ride
+     * 
+     * Business Rules:
+     * - Ride must exist
+     * - Ride must be OPEN
+     * - Enough seats must be available
+     * 
+     * @param rideId The ride to book
+     * @param riderId The rider (email) requesting the booking
+     * @param seats Number of seats to book
+     * @return Optional containing the created booking, or empty if validation fails
+     */
+    public Optional<Booking> createBooking(String rideId, String riderId, int seats) {
+        Optional<Ride> rideOpt = rideRepository.findById(rideId);
+        
+        if (rideOpt.isEmpty()) {
+            return Optional.empty();
+        }
+        
+        Ride ride = rideOpt.get();
+        
+        // Validate: Ride must be OPEN
+        if (ride.getStatus() != RideStatus.OPEN) {
+            return Optional.empty();
+        }
+        
+        // Validate: Enough seats available
+        if (ride.getSeatsFree() < seats) {
+            return Optional.empty();
+        }
+        
+        // Create booking using constructor
+        Booking booking = new Booking(rideId, riderId, seats);
+        booking.setUpdatedAt(LocalDateTime.now());
+        
+        return Optional.of(bookingRepository.save(booking));
+    }
+    
+    /**
      * Approve a booking and update available seats
      * 
      * Business Rules:
