@@ -36,6 +36,9 @@
             <li class="nav-item">
               <a class="nav-link" href="/rides/create">Create Ride</a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/rides/requests">Booking Requests</a>
+            </li>
           {/if}
           <li class="nav-item">
             <a class="nav-link" href="/account">Account</a>

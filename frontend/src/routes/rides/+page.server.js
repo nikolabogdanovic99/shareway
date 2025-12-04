@@ -14,7 +14,8 @@ export async function load({ url, locals }) {
             users: [],
             myBookings: [],
             nrOfPages: 0,
-            currentPage: 1
+            currentPage: 1,
+            currentUserEmail: ''
         };
     }
     
@@ -55,6 +56,7 @@ export async function load({ url, locals }) {
             myBookings: myBookings,
             nrOfPages: ridesResponse.data.totalPages || 0,
             currentPage: currentPage,
+            currentUserEmail: userEmail,
         };
 
     } catch (axiosError) {
@@ -64,7 +66,8 @@ export async function load({ url, locals }) {
             users: [],
             myBookings: [],
             nrOfPages: 0,
-            currentPage: 1
+            currentPage: 1,
+            currentUserEmail: ''
         };
     }
 }

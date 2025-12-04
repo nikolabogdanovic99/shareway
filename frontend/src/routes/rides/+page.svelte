@@ -8,6 +8,7 @@
   let myBookings = $state(data.myBookings);
   let currentPage = $state(data.currentPage);
   let nrOfPages = $state(data.nrOfPages);
+  let currentUserEmail = $state(data.currentUserEmail);
   const pageSize = 5;
 
   // Update when data changes
@@ -16,6 +17,7 @@
     myBookings = data.myBookings;
     currentPage = data.currentPage;
     nrOfPages = data.nrOfPages;
+    currentUserEmail = data.currentUserEmail;
   });
 
   // Helper function to get driver name
@@ -38,6 +40,11 @@
   // Check if user has booked this ride
   function getMyBooking(rideId) {
     return myBookings.find(b => b.rideId === rideId);
+  }
+
+  // Check if current user is the driver of this ride
+  function isMyRide(driverId) {
+    return currentUserEmail && currentUserEmail === driverId;
   }
 </script>
 
@@ -81,7 +88,9 @@
             </span>
           </td>
           <td>
-            {#if myBooking}
+            {#if isMyRide(ride.driverId)}
+              <span class="badge bg-secondary">Your Ride</span>
+            {:else if myBooking}
               <span class="badge bg-info">{myBooking.status}</span>
             {:else if ride.status === "OPEN" && ride.seatsFree > 0}
               <form method="POST" action="?/bookRide" use:enhance style="display: inline;">
