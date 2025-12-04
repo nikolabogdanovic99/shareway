@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -17,7 +18,10 @@ import ch.zhaw.shareway.model.BookingActionDTO;
 import ch.zhaw.shareway.model.Ride;
 import ch.zhaw.shareway.model.RideCompleteDTO;
 import ch.zhaw.shareway.model.RideStatusAggregationDTO;
+import ch.zhaw.shareway.model.User;
+import ch.zhaw.shareway.model.VerificationStatus;
 import ch.zhaw.shareway.repository.RideRepository;
+import ch.zhaw.shareway.repository.UserRepository;
 import ch.zhaw.shareway.service.BookingService;
 import ch.zhaw.shareway.service.RideService;
 import ch.zhaw.shareway.service.UserService;
@@ -38,6 +42,9 @@ public class RideServiceController {
     
     @Autowired
     private RideRepository rideRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private UserService userService;
@@ -151,5 +158,47 @@ public class RideServiceController {
             return ResponseEntity.ok(booking.get());
         }
         return ResponseEntity.badRequest().build();
+    }
+
+    /**
+     * Verify a user (Admin only)
+     * PUT /api/service/admin/verify?userId=...
+     */
+    @PutMapping("/admin/verify")
+    public ResponseEntity<User> verifyUser(@RequestParam String userId) {
+        if (!userService.userHasRole("admin")) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        
+        Optional<User> optUser = userRepository.findById(userId);
+        if (optUser.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        User user = optUser.get();
+        user.setVerificationStatus(VerificationStatus.VERIFIED);
+        User savedUser = userRepository.save(user);
+        return ResponseEntity.ok(savedUser);
+    }
+
+    /**
+     * Reject a user verification (Admin only)
+     * PUT /api/service/admin/reject?userId=...
+     */
+    @PutMapping("/admin/reject")
+    public ResponseEntity<User> rejectUser(@RequestParam String userId) {
+        if (!userService.userHasRole("admin")) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        
+        Optional<User> optUser = userRepository.findById(userId);
+        if (optUser.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        User user = optUser.get();
+        user.setVerificationStatus(VerificationStatus.DENIED);
+        User savedUser = userRepository.save(user);
+        return ResponseEntity.ok(savedUser);
     }
 }

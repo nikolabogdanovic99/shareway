@@ -21,4 +21,15 @@ public class UserService {
         Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return jwt.getClaimAsString("email");
     }
+
+    public String getAuth0Id() {
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return jwt.getSubject();
+    }
+
+    public String getName() {
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String name = jwt.getClaimAsString("name");
+        return name != null ? name : getEmail();
+    }
 }

@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 @Document("users")
 @NoArgsConstructor
@@ -19,19 +20,48 @@ public class User {
     private String id;
     
     @NonNull
-    private String auth0Id; // unique - von Auth0 Login
+    private String auth0Id;
     
     @NonNull
-    private String email; // unique
+    private String email;
     
     @NonNull
     private String name;
     
     @NonNull
-    private UserRole role; // RIDER, DRIVER, ADMIN (Enum!)
+    private UserRole role;
     
-    private String pictureUrl; // Profilbild URL (optional)
-    private Double rating = 0.0; // Durchschnittsbewertung
-    private Integer reviewCount = 0; // Anzahl Bewertungen
+    @Setter
+    private String firstName;
+    
+    @Setter
+    private String lastName;
+    
+    @Setter
+    private String profileImage;
+    
+    @Setter
+    private String licenseImageFront;
+    
+    @Setter
+    private String licenseImageBack;
+    
+    @Setter
+    private VerificationStatus verificationStatus = VerificationStatus.UNVERIFIED;
+    
+    private String pictureUrl;
+    private Double rating = 0.0;
+    private Integer reviewCount = 0;
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    // Profil ist vollständig wenn Name und Nachname vorhanden
+    public boolean isProfileComplete() {
+        return firstName != null && !firstName.isEmpty() &&
+               lastName != null && !lastName.isEmpty();
+    }
+
+    // Kann Rides erstellen wenn verifiziert
+    public boolean canCreateRides() {
+        return verificationStatus == VerificationStatus.VERIFIED;
+    }
 }

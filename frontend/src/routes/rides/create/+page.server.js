@@ -11,40 +11,57 @@ export async function load({ locals }) {
     if (!jwt_token) {
         return {
             myVehicles: [],
-            myRides: []
+            myRides: [],
+            dbUser: null
         };
     }
     
+    let myVehicles = [];
+    let myRides = [];
+    let dbUser = null;
+    const userEmail = user_info?.email || '';
+
+    // Load vehicles
     try {
         const vehiclesResponse = await axios({
             method: "get",
             url: `${API_BASE_URL}/api/vehicles`,
             headers: { Authorization: "Bearer " + jwt_token }
         });
+        myVehicles = vehiclesResponse.data.filter(v => v.ownerId === userEmail);
+    } catch (err) {
+        console.log('Error loading vehicles:', err);
+    }
 
+    // Load rides
+    try {
         const ridesResponse = await axios({
             method: "get",
             url: `${API_BASE_URL}/api/rides?pageSize=100`,
             headers: { Authorization: "Bearer " + jwt_token }
         });
-
-        // Filter for current user
-        const userEmail = user_info?.email || '';
-        const myVehicles = vehiclesResponse.data.filter(v => v.ownerId === userEmail);
-        const myRides = ridesResponse.data.content.filter(r => r.driverId === userEmail);
-
-        return {
-            myVehicles: myVehicles,
-            myRides: myRides
-        };
-
-    } catch (axiosError) {
-        console.log('Error loading data:', axiosError);
-        return {
-            myVehicles: [],
-            myRides: []
-        };
+        myRides = ridesResponse.data.content.filter(r => r.driverId === userEmail);
+    } catch (err) {
+        console.log('Error loading rides:', err);
     }
+
+    // Load user from DB
+    try {
+        const userResponse = await axios({
+            method: "get",
+            url: `${API_BASE_URL}/api/users/me`,
+            headers: { Authorization: "Bearer " + jwt_token }
+        });
+        dbUser = userResponse.data;
+    } catch (err) {
+        console.log('Error loading user:', err);
+    }
+
+    return {
+        myVehicles: myVehicles,
+        myRides: myRides,
+        dbUser: dbUser
+    };
 }
 
 export const actions = {

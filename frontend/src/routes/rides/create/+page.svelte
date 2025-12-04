@@ -2,7 +2,7 @@
   import { enhance } from "$app/forms";
   
   let { data, form } = $props();
-  let { user, isAuthenticated } = data;
+  let { user, isAuthenticated, dbUser } = data;
 
   let myVehicles = $state(data.myVehicles);
   let myRides = $state(data.myRides);
@@ -14,6 +14,11 @@
 
   const isDriverOrAdmin = isAuthenticated && user.user_roles && 
     (user.user_roles.includes("driver") || user.user_roles.includes("admin"));
+
+  const isAdmin = isAuthenticated && user.user_roles && user.user_roles.includes("admin");
+
+  // Admin kann immer, Driver nur wenn verifiziert
+  const canCreateRides = isAdmin || (isDriverOrAdmin && dbUser?.verificationStatus === 'VERIFIED');
 
   // Get default datetime (tomorrow at 10:00)
   function getDefaultDateTime() {
@@ -40,6 +45,15 @@
 {#if !isDriverOrAdmin}
   <div class="alert alert-warning">
     Only drivers can create rides.
+  </div>
+{:else if !canCreateRides}
+  <div class="alert alert-warning">
+    <strong>Verification required!</strong>
+    {#if dbUser?.verificationStatus === 'PENDING'}
+      Your verification is pending. Please wait for admin approval.
+    {:else}
+      Please <a href="/account">complete your profile</a> and get verified before creating rides.
+    {/if}
   </div>
 {:else if myVehicles.length === 0}
   <div class="alert alert-warning">

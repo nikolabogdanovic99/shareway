@@ -9,6 +9,7 @@
   let currentPage = $state(data.currentPage);
   let nrOfPages = $state(data.nrOfPages);
   let currentUserEmail = $state(data.currentUserEmail);
+  let dbUser = $state(data.dbUser);
   const pageSize = 5;
 
   // Update when data changes
@@ -18,7 +19,13 @@
     currentPage = data.currentPage;
     nrOfPages = data.nrOfPages;
     currentUserEmail = data.currentUserEmail;
+    dbUser = data.dbUser;
   });
+
+  // Check if profile is complete
+  const isProfileComplete = $derived(
+    dbUser?.firstName && dbUser?.lastName
+  );
 
   // Helper function to get driver name
   function getDriverName(driverId) {
@@ -49,6 +56,13 @@
 </script>
 
 <h1 class="mt-3">Available Rides</h1>
+
+{#if !isProfileComplete}
+  <div class="alert alert-warning">
+    <strong>Profile incomplete!</strong> 
+    <a href="/account">Complete your profile</a> (name and surname) to book rides.
+  </div>
+{/if}
 
 {#if rides.length === 0}
   <div class="alert alert-info">No rides available at the moment.</div>
@@ -93,10 +107,14 @@
             {:else if myBooking}
               <span class="badge bg-info">{myBooking.status}</span>
             {:else if ride.status === "OPEN" && ride.seatsFree > 0}
-              <form method="POST" action="?/bookRide" use:enhance style="display: inline;">
-                <input type="hidden" name="rideId" value={ride.id} />
-                <button type="submit" class="btn btn-primary btn-sm">Book Ride</button>
-              </form>
+              {#if isProfileComplete}
+                <form method="POST" action="?/bookRide" use:enhance style="display: inline;">
+                  <input type="hidden" name="rideId" value={ride.id} />
+                  <button type="submit" class="btn btn-primary btn-sm">Book Ride</button>
+                </form>
+              {:else}
+                <span class="badge bg-secondary">Complete profile</span>
+              {/if}
             {:else if ride.status === "COMPLETED"}
               <span class="badge bg-secondary">Completed</span>
             {:else if ride.status === "FULL"}

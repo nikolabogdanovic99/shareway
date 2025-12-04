@@ -15,61 +15,79 @@ export async function load({ url, locals }) {
             myBookings: [],
             nrOfPages: 0,
             currentPage: 1,
-            currentUserEmail: ''
+            currentUserEmail: '',
+            dbUser: null
         };
     }
     
+    let rides = [];
+    let users = [];
+    let myBookings = [];
+    let nrOfPages = 0;
+    let dbUser = null;
+    const userEmail = user_info?.email || '';
+    const currentPage = parseInt(url.searchParams.get('pageNumber') || '1');
+    const pageSize = parseInt(url.searchParams.get('pageSize') || '5');
+
+    // Load rides
     try {
-        // Get URL parameters for pagination
-        const currentPage = parseInt(url.searchParams.get('pageNumber') || '1');
-        const pageSize = parseInt(url.searchParams.get('pageSize') || '5');
-
-        // Build query string
-        let query = `?pageSize=${pageSize}&pageNumber=${currentPage}`;
-
+        const query = `?pageSize=${pageSize}&pageNumber=${currentPage}`;
         const ridesResponse = await axios({
             method: "get",
             url: `${API_BASE_URL}/api/rides` + query,
             headers: { Authorization: "Bearer " + jwt_token }
         });
+        rides = ridesResponse.data.content;
+        nrOfPages = ridesResponse.data.totalPages || 0;
+    } catch (err) {
+        console.log('Error loading rides:', err);
+    }
 
+    // Load users
+    try {
         const usersResponse = await axios({
             method: "get",
             url: `${API_BASE_URL}/api/users`,
             headers: { Authorization: "Bearer " + jwt_token }
         });
+        users = usersResponse.data;
+    } catch (err) {
+        console.log('Error loading users:', err);
+    }
 
-        // Get user's bookings
+    // Load bookings
+    try {
         const bookingsResponse = await axios({
             method: "get",
             url: `${API_BASE_URL}/api/bookings`,
             headers: { Authorization: "Bearer " + jwt_token }
         });
-
-        // Filter bookings for current user
-        const userEmail = user_info?.email || '';
-        const myBookings = bookingsResponse.data.filter(b => b.riderId === userEmail);
-
-        return {
-            rides: ridesResponse.data.content,
-            users: usersResponse.data,
-            myBookings: myBookings,
-            nrOfPages: ridesResponse.data.totalPages || 0,
-            currentPage: currentPage,
-            currentUserEmail: userEmail,
-        };
-
-    } catch (axiosError) {
-        console.log('Error loading rides:', axiosError);
-        return {
-            rides: [],
-            users: [],
-            myBookings: [],
-            nrOfPages: 0,
-            currentPage: 1,
-            currentUserEmail: ''
-        };
+        myBookings = bookingsResponse.data.filter(b => b.riderId === userEmail);
+    } catch (err) {
+        console.log('Error loading bookings:', err);
     }
+
+    // Load current user from DB
+    try {
+        const userResponse = await axios({
+            method: "get",
+            url: `${API_BASE_URL}/api/users/me`,
+            headers: { Authorization: "Bearer " + jwt_token }
+        });
+        dbUser = userResponse.data;
+    } catch (err) {
+        console.log('Error loading db user:', err);
+    }
+
+    return {
+        rides: rides,
+        users: users,
+        myBookings: myBookings,
+        nrOfPages: nrOfPages,
+        currentPage: currentPage,
+        currentUserEmail: userEmail,
+        dbUser: dbUser
+    };
 }
 
 export const actions = {
@@ -89,8 +107,10 @@ export const actions = {
                 url: `${API_BASE_URL}/api/service/me/bookride?rideId=${rideId}&seats=1`,
                 headers: { Authorization: "Bearer " + jwt_token },
             });
+            return { success: true };
         } catch (err) {
             console.log('Error booking ride:', err);
+            return { success: false, error: 'Could not book ride' };
         }
     }
 }

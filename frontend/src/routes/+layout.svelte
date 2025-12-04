@@ -40,6 +40,11 @@
               <a class="nav-link" href="/rides/requests">Booking Requests</a>
             </li>
           {/if}
+          {#if user.user_roles && user.user_roles.includes("admin")}
+            <li class="nav-item">
+              <a class="nav-link" href="/admin/verifications">Verifications</a>
+            </li>
+          {/if}
           <li class="nav-item">
             <a class="nav-link" href="/account">Account</a>
           </li>
