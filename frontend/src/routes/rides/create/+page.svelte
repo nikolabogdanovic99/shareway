@@ -40,6 +40,16 @@
     const vehicle = myVehicles.find(v => v.id === vehicleId);
     return vehicle ? `${vehicle.make} ${vehicle.model}` : 'Unknown';
   }
+
+  // Format duration
+  function formatDuration(minutes) {
+    if (!minutes) return '-';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0 && mins > 0) return `${hours}h ${mins}min`;
+    if (hours > 0) return `${hours}h`;
+    return `${mins}min`;
+  }
 </script>
 
 {#if !isDriverOrAdmin}
@@ -100,15 +110,20 @@
     </div>
 
     <div class="row mb-3">
-      <div class="col-md-4">
+      <div class="col-md-3">
         <label class="form-label" for="departureTime">Departure *</label>
         <input class="form-control" id="departureTime" name="departureTime" type="datetime-local" value={getDefaultDateTime()} required />
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3">
+        <label class="form-label" for="durationMinutes">Duration (minutes) *</label>
+        <input class="form-control" id="durationMinutes" name="durationMinutes" type="number" min="15" max="720" value="60" required />
+        <small class="text-muted">Estimated travel time</small>
+      </div>
+      <div class="col-md-3">
         <label class="form-label" for="pricePerSeat">Price per Seat (CHF) *</label>
         <input class="form-control" id="pricePerSeat" name="pricePerSeat" type="number" min="0" step="0.50" value="15" required />
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3">
         <label class="form-label" for="seatsTotal">Available Seats *</label>
         <input class="form-control" id="seatsTotal" name="seatsTotal" type="number" min="1" max="8" value="3" required />
       </div>
@@ -137,6 +152,7 @@
           <th>From</th>
           <th>To</th>
           <th>Departure</th>
+          <th>Duration</th>
           <th>Vehicle</th>
           <th>Price</th>
           <th>Seats</th>
@@ -145,10 +161,11 @@
       </thead>
       <tbody>
         {#each myRides as ride}
-          <tr>
+          <tr style="cursor: pointer;" onclick={() => window.location.href = `/rides/${ride.id}`}>
             <td>{ride.startLocation}</td>
             <td>{ride.endLocation}</td>
             <td>{formatDate(ride.departureTime)}</td>
+            <td>{formatDuration(ride.durationMinutes)}</td>
             <td>{getVehicleName(ride.vehicleId)}</td>
             <td>CHF {ride.pricePerSeat}</td>
             <td>{ride.seatsFree} / {ride.seatsTotal}</td>

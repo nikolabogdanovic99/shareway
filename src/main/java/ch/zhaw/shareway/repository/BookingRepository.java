@@ -25,4 +25,6 @@ public interface BookingRepository extends MongoRepository<Booking, String> {
     
     // Bookings für eine Ride mit bestimmtem Status
     List<Booking> findByRideIdAndStatus(String rideId, BookingStatus status);
+
+    List<Booking> findByRiderIdAndRideId(String riderId, String rideId);
 }

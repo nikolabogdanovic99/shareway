@@ -80,6 +80,7 @@ export const actions = {
             startLocation: data.get('startLocation'),
             endLocation: data.get('endLocation'),
             departureTime: data.get('departureTime'),
+            durationMinutes: parseInt(data.get('durationMinutes')),
             pricePerSeat: parseFloat(data.get('pricePerSeat')),
             seatsTotal: parseInt(data.get('seatsTotal')),
             description: data.get('description') || null

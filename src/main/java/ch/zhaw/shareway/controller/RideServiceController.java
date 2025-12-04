@@ -17,6 +17,7 @@ import ch.zhaw.shareway.model.Booking;
 import ch.zhaw.shareway.model.BookingActionDTO;
 import ch.zhaw.shareway.model.Ride;
 import ch.zhaw.shareway.model.RideCompleteDTO;
+import ch.zhaw.shareway.model.RideStatus;
 import ch.zhaw.shareway.model.RideStatusAggregationDTO;
 import ch.zhaw.shareway.model.User;
 import ch.zhaw.shareway.model.VerificationStatus;
@@ -26,6 +27,8 @@ import ch.zhaw.shareway.service.BookingService;
 import ch.zhaw.shareway.service.RideService;
 import ch.zhaw.shareway.service.UserService;
 
+import ch.zhaw.shareway.model.RideStatus;
+
 /**
  * Controller for service-related endpoints
  * Handles business logic operations for rides and bookings
@@ -33,13 +36,13 @@ import ch.zhaw.shareway.service.UserService;
 @RestController
 @RequestMapping("/api/service")
 public class RideServiceController {
-    
+
     @Autowired
     private RideService rideService;
-    
+
     @Autowired
     private BookingService bookingService;
-    
+
     @Autowired
     private RideRepository rideRepository;
 
@@ -48,7 +51,7 @@ public class RideServiceController {
 
     @Autowired
     private UserService userService;
-    
+
     /**
      * Complete a ride (Driver only)
      * PUT /api/service/rides/complete
@@ -56,14 +59,14 @@ public class RideServiceController {
     @PutMapping("/rides/complete")
     public ResponseEntity<Ride> completeRide(@RequestBody RideCompleteDTO dto) {
         Optional<Ride> ride = rideService.completeRide(dto.getRideId(), dto.getDriverId());
-        
+
         if (ride.isPresent()) {
             return ResponseEntity.ok(ride.get());
         }
-        
+
         return ResponseEntity.badRequest().build();
     }
-    
+
     /**
      * Approve a booking (Driver only)
      * PUT /api/service/bookings/approve
@@ -71,17 +74,16 @@ public class RideServiceController {
     @PutMapping("/bookings/approve")
     public ResponseEntity<Booking> approveBooking(@RequestBody BookingActionDTO dto) {
         Optional<Booking> booking = bookingService.approveBooking(
-            dto.getBookingId(), 
-            dto.getDriverId()
-        );
-        
+                dto.getBookingId(),
+                dto.getDriverId());
+
         if (booking.isPresent()) {
             return ResponseEntity.ok(booking.get());
         }
-        
+
         return ResponseEntity.badRequest().build();
     }
-    
+
     /**
      * Reject a booking (Driver only)
      * PUT /api/service/bookings/reject
@@ -89,27 +91,24 @@ public class RideServiceController {
     @PutMapping("/bookings/reject")
     public ResponseEntity<Booking> rejectBooking(@RequestBody BookingActionDTO dto) {
         Optional<Booking> booking = bookingService.rejectBooking(
-            dto.getBookingId(), 
-            dto.getDriverId()
-        );
-        
+                dto.getBookingId(),
+                dto.getDriverId());
+
         if (booking.isPresent()) {
             return ResponseEntity.ok(booking.get());
         }
-        
+
         return ResponseEntity.badRequest().build();
     }
-    
+
     /**
      * Get driver dashboard with rides grouped by status
      * GET /api/service/dashboard/driver?driverId=...
      */
     @GetMapping("/dashboard/driver")
     public ResponseEntity<List<RideStatusAggregationDTO>> getDriverDashboard(
-        @RequestParam String driverId
-    ) {
-        List<RideStatusAggregationDTO> dashboard = 
-            rideRepository.getRidesDashboardForDriver(driverId);
+            @RequestParam String driverId) {
+        List<RideStatusAggregationDTO> dashboard = rideRepository.getRidesDashboardForDriver(driverId);
         return ResponseEntity.ok(dashboard);
     }
 
@@ -169,12 +168,12 @@ public class RideServiceController {
         if (!userService.userHasRole("admin")) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
-        
+
         Optional<User> optUser = userRepository.findById(userId);
         if (optUser.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        
+
         User user = optUser.get();
         user.setVerificationStatus(VerificationStatus.VERIFIED);
         User savedUser = userRepository.save(user);
@@ -190,15 +189,45 @@ public class RideServiceController {
         if (!userService.userHasRole("admin")) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
-        
+
         Optional<User> optUser = userRepository.findById(userId);
         if (optUser.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        
+
         User user = optUser.get();
         user.setVerificationStatus(VerificationStatus.DENIED);
         User savedUser = userRepository.save(user);
         return ResponseEntity.ok(savedUser);
+    }
+
+    /**
+     * Complete my ride (Driver only)
+     * PUT /api/service/me/completeride?rideId=...
+     */
+    @PutMapping("/me/completeride")
+    public ResponseEntity<Ride> completeMyRide(@RequestParam String rideId) {
+        String userEmail = userService.getEmail();
+
+        Optional<Ride> optRide = rideRepository.findById(rideId);
+        if (optRide.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Ride ride = optRide.get();
+
+        // Nur eigene Rides oder Admin
+        if (!ride.getDriverId().equals(userEmail) && !userService.userHasRole("admin")) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
+        // Nur OPEN oder IN_PROGRESS können completed werden
+        if (ride.getStatus() != RideStatus.OPEN && ride.getStatus() != RideStatus.IN_PROGRESS) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        ride.setStatus(RideStatus.COMPLETED);
+        Ride savedRide = rideRepository.save(ride);
+        return ResponseEntity.ok(savedRide);
     }
 }

@@ -23,7 +23,6 @@ import ch.zhaw.shareway.repository.RideRepository;
 import ch.zhaw.shareway.service.RideService;
 import ch.zhaw.shareway.service.UserService;
 
-
 @RestController
 @RequestMapping("/api")
 public class RideController {
@@ -60,6 +59,17 @@ public class RideController {
                 rideDTO.getPricePerSeat(),
                 rideDTO.getSeatsTotal(),
                 rideDTO.getSeatsTotal());
+
+        // Optional fields
+        if (rideDTO.getDescription() != null) {
+            ride.setDescription(rideDTO.getDescription());
+        }
+        if (rideDTO.getDurationMinutes() != null) {
+            ride.setDurationMinutes(rideDTO.getDurationMinutes());
+        }
+        if (rideDTO.getDistanceKm() != null) {
+            ride.setDistanceKm(rideDTO.getDistanceKm());
+        }
 
         Ride savedRide = rideRepository.save(ride);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedRide);

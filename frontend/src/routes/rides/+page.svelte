@@ -1,6 +1,6 @@
 <script>
   import { enhance } from "$app/forms";
-  
+
   let { data } = $props();
 
   let rides = $state(data.rides);
@@ -23,9 +23,7 @@
   });
 
   // Check if profile is complete
-  const isProfileComplete = $derived(
-    dbUser?.firstName && dbUser?.lastName
-  );
+  const isProfileComplete = $derived(dbUser?.firstName && dbUser?.lastName);
 
   // Helper function to get driver name
   function getDriverName(driverId) {
@@ -46,7 +44,7 @@
 
   // Check if user has booked this ride
   function getMyBooking(rideId) {
-    return myBookings.find(b => b.rideId === rideId);
+    return myBookings.find((b) => b.rideId === rideId);
   }
 
   // Check if current user is the driver of this ride
@@ -59,7 +57,7 @@
 
 {#if !isProfileComplete}
   <div class="alert alert-warning">
-    <strong>Profile incomplete!</strong> 
+    <strong>Profile incomplete!</strong>
     <a href="/account">Complete your profile</a> (name and surname) to book rides.
   </div>
 {/if}
@@ -83,7 +81,10 @@
     <tbody>
       {#each rides as ride}
         {@const myBooking = getMyBooking(ride.id)}
-        <tr>
+        <tr
+          style="cursor: pointer;"
+          onclick={() => (window.location.href = `/rides/${ride.id}`)}
+        >
           <td>{ride.startLocation}</td>
           <td>{ride.endLocation}</td>
           <td>{formatDate(ride.departureTime)}</td>
@@ -108,10 +109,7 @@
               <span class="badge bg-info">{myBooking.status}</span>
             {:else if ride.status === "OPEN" && ride.seatsFree > 0}
               {#if isProfileComplete}
-                <form method="POST" action="?/bookRide" use:enhance style="display: inline;">
-                  <input type="hidden" name="rideId" value={ride.id} />
-                  <button type="submit" class="btn btn-primary btn-sm">Book Ride</button>
-                </form>
+                <span class="badge bg-primary">Book</span>
               {:else}
                 <span class="badge bg-secondary">Complete profile</span>
               {/if}
@@ -130,7 +128,11 @@
     <ul class="pagination">
       {#each Array(nrOfPages) as _, i}
         <li class="page-item">
-          <a class="page-link" class:active={currentPage == i + 1} href="/rides?pageNumber={i + 1}&pageSize={pageSize}">{i + 1}</a>
+          <a
+            class="page-link"
+            class:active={currentPage == i + 1}
+            href="/rides?pageNumber={i + 1}&pageSize={pageSize}">{i + 1}</a
+          >
         </li>
       {/each}
     </ul>
