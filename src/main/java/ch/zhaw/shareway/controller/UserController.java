@@ -152,4 +152,5 @@ public class UserController {
         List<User> pendingUsers = userRepository.findByVerificationStatus(VerificationStatus.PENDING);
         return new ResponseEntity<>(pendingUsers, HttpStatus.OK);
     }
+    
 }

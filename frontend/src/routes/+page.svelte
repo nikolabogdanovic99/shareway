@@ -1,29 +1,45 @@
 <script>
   let { data } = $props();
-  let { user, isAuthenticated } = data;
+  let isAuthenticated = $state(data.isAuthenticated);
+  let user = $state(data.user);
+
+  $effect(() => {
+    isAuthenticated = data.isAuthenticated;
+    user = data.user;
+  });
 </script>
 
 <div class="container mt-5">
-  <div class="row">
-    <div class="col-md-8 offset-md-2 text-center">
-      <h1 class="display-4">Welcome to ShareWay</h1>
-      <p class="lead">Share rides, save money, reduce emissions.</p>
-      
-      {#if isAuthenticated}
-        <p>Hello, <strong>{user.name}</strong>!</p>
-        <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
-          <a href="/rides" class="btn btn-primary btn-lg">Browse Rides</a>
-          {#if user.user_roles && (user.user_roles.includes("driver") || user.user_roles.includes("admin"))}
-            <a href="/rides/create" class="btn btn-outline-primary btn-lg">Offer a Ride</a>
-          {/if}
-        </div>
-      {:else}
-        <p class="mt-4">Join our community of riders and drivers.</p>
-        <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
-          <a href="/login" class="btn btn-primary btn-lg">Login</a>
-          <a href="/signup" class="btn btn-outline-primary btn-lg">Sign Up</a>
-        </div>
-      {/if}
+  <div class="text-center">
+    <h1 class="display-4">Welcome to ShareWay</h1>
+    <p class="lead text-muted">Share rides, save money, reduce emissions.</p>
+    
+    {#if isAuthenticated}
+      <div class="mt-4">
+        <p>Hello, {user?.name || 'User'}!</p>
+        <a href="/rides" class="btn btn-primary btn-lg me-2">Browse Rides</a>
+        <a href="/driver" class="btn btn-outline-primary btn-lg">Driver Dashboard</a>
+      </div>
+    {:else}
+      <div class="mt-4">
+        <a href="/login" class="btn btn-primary btn-lg me-2">Login</a>
+        <a href="/signup" class="btn btn-outline-primary btn-lg">Sign Up</a>
+      </div>
+    {/if}
+  </div>
+
+  <div class="row mt-5">
+    <div class="col-md-4 text-center">
+      <h3>🚗 Find a Ride</h3>
+      <p>Search for available rides to your destination and book a seat.</p>
+    </div>
+    <div class="col-md-4 text-center">
+      <h3>🪪 Become a Driver</h3>
+      <p>Get verified, add your vehicle, and offer rides to earn money.</p>
+    </div>
+    <div class="col-md-4 text-center">
+      <h3>⭐ Rate & Review</h3>
+      <p>Share your experience and help build a trusted community.</p>
     </div>
   </div>
 </div>

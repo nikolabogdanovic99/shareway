@@ -284,9 +284,7 @@
         {:else if !isEditingVerification}
           <!-- View Mode -->
           {#if dbUser?.verificationStatus === 'VERIFIED'}
-            <div class="alert alert-success mb-3">
-              You are verified! You can create rides and add vehicles.
-            </div>
+            <!-- Verified: no alert needed, green badge shows status -->
           {:else if dbUser?.verificationStatus === 'PENDING'}
             <div class="alert alert-warning mb-3">
               Your verification is pending. An admin will review your documents soon.
@@ -360,6 +358,12 @@
                 {/if}
               </div>
             </div>
+
+            {#if !canRequestVerification}
+              <div class="alert alert-info mb-3">
+                Both license images (front and back) are required for verification.
+              </div>
+            {/if}
 
             {#if dbUser?.verificationStatus === 'VERIFIED' || dbUser?.verificationStatus === 'PENDING'}
               <p class="text-muted">
