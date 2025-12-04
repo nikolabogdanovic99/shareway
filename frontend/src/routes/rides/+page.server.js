@@ -27,11 +27,11 @@ export async function load({ url, locals }) {
     let dbUser = null;
     const userEmail = user_info?.email || '';
     const currentPage = parseInt(url.searchParams.get('pageNumber') || '1');
-    const pageSize = parseInt(url.searchParams.get('pageSize') || '5');
+    const pageSize = parseInt(url.searchParams.get('pageSize') || '10');
 
-    // Load rides
+    // Load rides - nur OPEN
     try {
-        const query = `?pageSize=${pageSize}&pageNumber=${currentPage}`;
+        const query = `?pageSize=${pageSize}&pageNumber=${currentPage}&status=OPEN`;
         const ridesResponse = await axios({
             method: "get",
             url: `${API_BASE_URL}/api/rides` + query,
@@ -80,37 +80,12 @@ export async function load({ url, locals }) {
     }
 
     return {
-        rides: rides,
-        users: users,
-        myBookings: myBookings,
-        nrOfPages: nrOfPages,
-        currentPage: currentPage,
+        rides,
+        users,
+        myBookings,
+        nrOfPages,
+        currentPage,
         currentUserEmail: userEmail,
-        dbUser: dbUser
+        dbUser
     };
-}
-
-export const actions = {
-    bookRide: async ({ request, locals }) => {
-        const jwt_token = locals.jwt_token;
-
-        if (!jwt_token) {
-            throw error(401, 'Authentication required');
-        }
-
-        const data = await request.formData();
-        const rideId = data.get('rideId');
-
-        try {
-            await axios({
-                method: "put",
-                url: `${API_BASE_URL}/api/service/me/bookride?rideId=${rideId}&seats=1`,
-                headers: { Authorization: "Bearer " + jwt_token },
-            });
-            return { success: true };
-        } catch (err) {
-            console.log('Error booking ride:', err);
-            return { success: false, error: 'Could not book ride' };
-        }
-    }
 }

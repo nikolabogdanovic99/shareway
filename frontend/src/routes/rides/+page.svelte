@@ -1,6 +1,4 @@
 <script>
-  import { enhance } from "$app/forms";
-
   let { data } = $props();
 
   let rides = $state(data.rides);
@@ -10,11 +8,11 @@
   let nrOfPages = $state(data.nrOfPages);
   let currentUserEmail = $state(data.currentUserEmail);
   let dbUser = $state(data.dbUser);
-  const pageSize = 5;
+  const pageSize = 10;
 
-  // Update when data changes
   $effect(() => {
     rides = data.rides;
+    users = data.users;
     myBookings = data.myBookings;
     currentPage = data.currentPage;
     nrOfPages = data.nrOfPages;
@@ -27,8 +25,12 @@
 
   // Helper function to get driver name
   function getDriverName(driverId) {
-    const driver = users.find((u) => u.id === driverId);
-    return driver ? driver.name : "Unknown";
+    const driver = users.find((u) => u.email === driverId);
+    if (!driver) return "Unknown";
+    if (driver.firstName && driver.lastName) {
+      return `${driver.firstName} ${driver.lastName}`;
+    }
+    return driver.name || "Unknown";
   }
 
   // Format date
@@ -65,7 +67,8 @@
 {#if rides.length === 0}
   <div class="alert alert-info">No rides available at the moment.</div>
 {:else}
-  <table class="table table-striped">
+  <p class="text-muted">Click on a ride to view details and book.</p>
+  <table class="table table-striped table-hover">
     <thead>
       <tr>
         <th>From</th>
@@ -74,8 +77,6 @@
         <th>Driver</th>
         <th>Price/Seat</th>
         <th>Seats Free</th>
-        <th>Status</th>
-        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -88,35 +89,19 @@
           <td>{ride.startLocation}</td>
           <td>{ride.endLocation}</td>
           <td>{formatDate(ride.departureTime)}</td>
-          <td>{getDriverName(ride.driverId)}</td>
-          <td>CHF {ride.pricePerSeat}</td>
-          <td>{ride.seatsFree} / {ride.seatsTotal}</td>
-          <td>
-            <span
-              class="badge"
-              class:bg-success={ride.status === "OPEN"}
-              class:bg-warning={ride.status === "FULL"}
-              class:bg-primary={ride.status === "IN_PROGRESS"}
-              class:bg-secondary={ride.status === "COMPLETED"}
-            >
-              {ride.status}
-            </span>
-          </td>
           <td>
             {#if isMyRide(ride.driverId)}
               <span class="badge bg-secondary">Your Ride</span>
-            {:else if myBooking}
+            {:else}
+              {getDriverName(ride.driverId)}
+            {/if}
+          </td>
+          <td>CHF {ride.pricePerSeat}</td>
+          <td>
+            {#if myBooking}
               <span class="badge bg-info">{myBooking.status}</span>
-            {:else if ride.status === "OPEN" && ride.seatsFree > 0}
-              {#if isProfileComplete}
-                <span class="badge bg-primary">Book</span>
-              {:else}
-                <span class="badge bg-secondary">Complete profile</span>
-              {/if}
-            {:else if ride.status === "COMPLETED"}
-              <span class="badge bg-secondary">Completed</span>
-            {:else if ride.status === "FULL"}
-              <span class="badge bg-warning">Full</span>
+            {:else}
+              {ride.seatsFree} / {ride.seatsTotal}
             {/if}
           </td>
         </tr>
@@ -124,19 +109,23 @@
     </tbody>
   </table>
 
-  <nav>
-    <ul class="pagination">
-      {#each Array(nrOfPages) as _, i}
-        <li class="page-item">
-          <a
-            class="page-link"
-            class:active={currentPage == i + 1}
-            href="/rides?pageNumber={i + 1}&pageSize={pageSize}">{i + 1}</a
-          >
-        </li>
-      {/each}
-    </ul>
-  </nav>
+  {#if nrOfPages > 1}
+    <nav>
+      <ul class="pagination">
+        {#each Array(nrOfPages) as _, i}
+          <li class="page-item">
+            
+              class="page-link"
+              class:active={currentPage == i + 1}
+              href="/rides?pageNumber={i + 1}&pageSize={pageSize}"
+            >
+              {i + 1}
+            </a>
+          </li>
+        {/each}
+      </ul>
+    </nav>
+  {/if}
 {/if}
 
 <style>

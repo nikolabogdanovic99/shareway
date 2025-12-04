@@ -29,15 +29,12 @@
           <li class="nav-item">
             <a class="nav-link" aria-current="page" href="/rides">Rides</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/bookings">My Bookings</a>
+          </li>
           {#if user.user_roles && (user.user_roles.includes("driver") || user.user_roles.includes("admin"))}
             <li class="nav-item">
-              <a class="nav-link" href="/vehicles">My Vehicles</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/rides/create">Create Ride</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/rides/requests">Booking Requests</a>
+              <a class="nav-link" href="/driver">Driver Dashboard</a>
             </li>
           {/if}
           {#if user.user_roles && user.user_roles.includes("admin")}

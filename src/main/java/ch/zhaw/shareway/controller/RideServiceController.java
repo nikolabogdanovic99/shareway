@@ -27,7 +27,6 @@ import ch.zhaw.shareway.service.BookingService;
 import ch.zhaw.shareway.service.RideService;
 import ch.zhaw.shareway.service.UserService;
 
-import ch.zhaw.shareway.model.RideStatus;
 
 /**
  * Controller for service-related endpoints
