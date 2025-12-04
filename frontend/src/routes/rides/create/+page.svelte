@@ -17,6 +17,9 @@
 
   const isAdmin = isAuthenticated && user.user_roles && user.user_roles.includes("admin");
 
+  // Profil vollständig?
+  const isProfileComplete = $derived(dbUser?.firstName && dbUser?.lastName);
+
   // Admin kann immer, Driver nur wenn verifiziert
   const canCreateRides = isAdmin || (isDriverOrAdmin && dbUser?.verificationStatus === 'VERIFIED');
 
@@ -53,20 +56,25 @@
 </script>
 
 {#if !isDriverOrAdmin}
-  <div class="alert alert-warning">
+  <div class="alert alert-warning mt-3">
     Only drivers can create rides.
   </div>
+{:else if !isProfileComplete}
+  <div class="alert alert-warning mt-3">
+    <strong>Profile incomplete!</strong>
+    Please <a href="/account">complete your profile</a> (first name and last name) before creating rides.
+  </div>
 {:else if !canCreateRides}
-  <div class="alert alert-warning">
+  <div class="alert alert-warning mt-3">
     <strong>Verification required!</strong>
     {#if dbUser?.verificationStatus === 'PENDING'}
       Your verification is pending. Please wait for admin approval.
     {:else}
-      Please <a href="/account">complete your profile</a> and get verified before creating rides.
+      Please <a href="/account">get verified</a> before creating rides.
     {/if}
   </div>
 {:else if myVehicles.length === 0}
-  <div class="alert alert-warning">
+  <div class="alert alert-warning mt-3">
     <strong>No vehicles found!</strong> 
     <a href="/vehicles">Create a vehicle first</a> before you can offer rides.
   </div>

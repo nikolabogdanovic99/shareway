@@ -14,6 +14,10 @@
   let licenseFrontPreview = $state(dbUser?.licenseImageFront || '');
   let licenseBackPreview = $state(dbUser?.licenseImageBack || '');
 
+  // Edit modes
+  let isEditingProfile = $state(false);
+  let isEditingVerification = $state(false);
+
   // Update when data changes
   $effect(() => {
     if (data.dbUser) {
@@ -25,6 +29,11 @@
       licenseImageBack = data.dbUser.licenseImageBack || '';
       licenseFrontPreview = data.dbUser.licenseImageFront || '';
       licenseBackPreview = data.dbUser.licenseImageBack || '';
+    }
+    // Close edit mode after successful save
+    if (form?.success) {
+      isEditingProfile = false;
+      isEditingVerification = false;
     }
   });
 
@@ -76,12 +85,33 @@
     }
   }
 
-  // Clear license images
-  function clearLicenseImages() {
+  // Clear license front
+  function clearLicenseFront() {
     licenseImageFront = '';
-    licenseImageBack = '';
     licenseFrontPreview = '';
+  }
+
+  // Clear license back
+  function clearLicenseBack() {
+    licenseImageBack = '';
     licenseBackPreview = '';
+  }
+
+  // Cancel editing - reset to original values
+  function cancelProfileEdit() {
+    firstName = dbUser?.firstName || '';
+    lastName = dbUser?.lastName || '';
+    profileImage = dbUser?.profileImage || '';
+    profileImagePreview = dbUser?.profileImage || '';
+    isEditingProfile = false;
+  }
+
+  function cancelVerificationEdit() {
+    licenseImageFront = dbUser?.licenseImageFront || '';
+    licenseImageBack = dbUser?.licenseImageBack || '';
+    licenseFrontPreview = dbUser?.licenseImageFront || '';
+    licenseBackPreview = dbUser?.licenseImageBack || '';
+    isEditingVerification = false;
   }
 
   // Get status badge class
@@ -115,18 +145,18 @@
     <div class="alert alert-danger">{form.error}</div>
   {/if}
 
-  <div class="row">
-    <!-- Auth0 Info -->
-    <div class="col-md-4">
-      <div class="card mb-4">
-        <div class="card-header">
-          <h5 class="mb-0">Account Info</h5>
-        </div>
-        <div class="card-body">
-          <p><img src={user.picture} alt="Profile" class="rounded-circle" width="80" /></p>
-          <p><b>Email:</b> {user.email}</p>
+  <!-- Account Info Card -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">Account Info</h5>
+    </div>
+    <div class="card-body">
+      <div class="d-flex align-items-center">
+        <img src={user.picture} alt="Profile" class="rounded-circle me-3" width="80" />
+        <div>
+          <p class="mb-1"><strong>Email:</strong> {user.email}</p>
           {#if user.user_roles && user.user_roles.length > 0}
-            <p><b>Role:</b> {user.user_roles.join(', ')}</p>
+            <p class="mb-1"><strong>Role:</strong> {user.user_roles.join(', ')}</p>
           {/if}
           {#if isAdmin}
             <span class="badge bg-primary">Admin - No verification required</span>
@@ -134,110 +164,165 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Profile Section -->
-    <div class="col-md-8">
-      <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">Profile</h5>
-          {#if isProfileComplete}
-            <span class="badge bg-success">Complete</span>
-          {:else}
-            <span class="badge bg-warning text-dark">Incomplete</span>
-          {/if}
-        </div>
-        <div class="card-body">
-          {#if !isProfileComplete}
-            <div class="alert alert-info">
-              Complete your profile to book rides. Name and surname are required.
-            </div>
-          {/if}
-
-          <form method="POST" action="?/updateProfile" use:enhance>
-            <div class="row mb-3">
-              <div class="col-md-6">
-                <label class="form-label" for="firstName">First Name *</label>
-                <input 
-                  class="form-control" 
-                  id="firstName" 
-                  name="firstName" 
-                  type="text" 
-                  bind:value={firstName}
-                />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="lastName">Last Name *</label>
-                <input 
-                  class="form-control" 
-                  id="lastName" 
-                  name="lastName" 
-                  type="text" 
-                  bind:value={lastName}
-                />
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label" for="profileImageUpload">Profile Image (optional)</label>
-              <input 
-                class="form-control" 
-                id="profileImageUpload" 
-                type="file" 
-                accept="image/*"
-                onchange={handleProfileImageUpload}
-              />
-              <input type="hidden" name="profileImage" value={profileImage} />
-            </div>
-
+  <!-- Profile Card -->
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Profile</h5>
+      <div>
+        {#if isProfileComplete}
+          <span class="badge bg-success me-2">Complete</span>
+        {:else}
+          <span class="badge bg-warning text-dark me-2">Incomplete</span>
+        {/if}
+        {#if !isEditingProfile}
+          <button class="btn btn-sm btn-outline-primary" onclick={() => isEditingProfile = true}>
+            Edit
+          </button>
+        {/if}
+      </div>
+    </div>
+    <div class="card-body">
+      {#if !isEditingProfile}
+        <!-- View Mode -->
+        <div class="d-flex align-items-center">
+          <div class="me-4">
             {#if profileImagePreview}
-              <div class="mb-3">
-                <img src={profileImagePreview} alt="Profile Preview" class="rounded" style="max-width: 150px; max-height: 150px;" />
-                <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick={clearProfileImage}>Remove</button>
+              <img src={profileImagePreview} alt="Profile" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;" />
+            {:else}
+              <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+                <span class="text-white fs-4">{firstName?.charAt(0) || '?'}{lastName?.charAt(0) || ''}</span>
               </div>
             {/if}
-
-            <button type="submit" class="btn btn-primary">Save Profile</button>
-          </form>
+          </div>
+          <div>
+            <p class="mb-1"><strong>First Name:</strong> {firstName || '-'}</p>
+            <p class="mb-1"><strong>Last Name:</strong> {lastName || '-'}</p>
+          </div>
         </div>
-      </div>
+        {#if !isProfileComplete}
+          <div class="alert alert-info mt-3 mb-0">
+            Complete your profile to book rides. Click "Edit" to add your name.
+          </div>
+        {/if}
+      {:else}
+        <!-- Edit Mode -->
+        <form method="POST" action="?/updateProfile" use:enhance>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label" for="firstName">First Name *</label>
+              <input 
+                class="form-control" 
+                id="firstName" 
+                name="firstName" 
+                type="text" 
+                bind:value={firstName}
+              />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="lastName">Last Name *</label>
+              <input 
+                class="form-control" 
+                id="lastName" 
+                name="lastName" 
+                type="text" 
+                bind:value={lastName}
+              />
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="profileImageUpload">Profile Image (optional)</label>
+            <input 
+              class="form-control" 
+              id="profileImageUpload" 
+              type="file" 
+              accept="image/*"
+              onchange={handleProfileImageUpload}
+            />
+            <input type="hidden" name="profileImage" value={profileImage} />
+          </div>
+
+          {#if profileImagePreview}
+            <div class="mb-3">
+              <img src={profileImagePreview} alt="Profile Preview" class="rounded" style="max-width: 150px; max-height: 150px;" />
+              <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick={clearProfileImage}>Remove</button>
+            </div>
+          {/if}
+
+          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="button" class="btn btn-secondary ms-2" onclick={cancelProfileEdit}>Cancel</button>
+        </form>
+      {/if}
     </div>
   </div>
 
-  <!-- Driver Verification Section - nur für Nicht-Admins -->
+  <!-- Driver Verification Card - nur für Nicht-Admins -->
   {#if !isAdmin}
     <div class="card mb-4">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Driver Verification</h5>
-        {#if dbUser}
-          <span class="badge {getStatusClass(dbUser.verificationStatus)}">
-            {dbUser.verificationStatus || 'UNVERIFIED'}
-          </span>
-        {/if}
+        <div>
+          {#if dbUser}
+            <span class="badge {getStatusClass(dbUser.verificationStatus)} me-2">
+              {dbUser.verificationStatus || 'UNVERIFIED'}
+            </span>
+          {/if}
+          {#if !isEditingVerification && isProfileComplete}
+            <button class="btn btn-sm btn-outline-primary" onclick={() => isEditingVerification = true}>
+              Edit
+            </button>
+          {/if}
+        </div>
       </div>
       <div class="card-body">
         {#if !isProfileComplete}
-          <div class="alert alert-warning">
+          <div class="alert alert-warning mb-0">
             Please complete your profile first before requesting driver verification.
           </div>
-        {:else}
+        {:else if !isEditingVerification}
+          <!-- View Mode -->
           {#if dbUser?.verificationStatus === 'VERIFIED'}
-            <div class="alert alert-success">
+            <div class="alert alert-success mb-3">
               You are verified! You can create rides and add vehicles.
             </div>
           {:else if dbUser?.verificationStatus === 'PENDING'}
-            <div class="alert alert-warning">
+            <div class="alert alert-warning mb-3">
               Your verification is pending. An admin will review your documents soon.
             </div>
           {:else if dbUser?.verificationStatus === 'DENIED'}
-            <div class="alert alert-danger">
+            <div class="alert alert-danger mb-3">
               Your verification was denied. Please upload new documents and try again.
             </div>
           {:else}
-            <div class="alert alert-info">
-              To offer rides, upload your driver's license (front and back) for verification.
+            <div class="alert alert-info mb-3">
+              To offer rides, click "Edit" to upload your driver's license for verification.
             </div>
           {/if}
 
+          {#if licenseFrontPreview || licenseBackPreview}
+            <div class="row">
+              <div class="col-md-6">
+                <p class="fw-bold">Front:</p>
+                {#if licenseFrontPreview}
+                  <img src={licenseFrontPreview} alt="License Front" class="img-fluid rounded border" style="max-height: 200px;" />
+                {:else}
+                  <span class="text-muted">Not uploaded</span>
+                {/if}
+              </div>
+              <div class="col-md-6">
+                <p class="fw-bold">Back:</p>
+                {#if licenseBackPreview}
+                  <img src={licenseBackPreview} alt="License Back" class="img-fluid rounded border" style="max-height: 200px;" />
+                {:else}
+                  <span class="text-muted">Not uploaded</span>
+                {/if}
+              </div>
+            </div>
+          {/if}
+        {:else}
+          <!-- Edit Mode -->
           <form method="POST" action="?/requestVerification" use:enhance>
             <div class="row mb-3">
               <div class="col-md-6">
@@ -251,7 +336,10 @@
                 />
                 <input type="hidden" name="licenseImageFront" value={licenseImageFront} />
                 {#if licenseFrontPreview}
-                  <img src={licenseFrontPreview} alt="License Front" class="mt-2 rounded" style="max-width: 200px;" />
+                  <div class="mt-2">
+                    <img src={licenseFrontPreview} alt="License Front" class="rounded" style="max-width: 200px;" />
+                    <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick={clearLicenseFront}>Remove</button>
+                  </div>
                 {/if}
               </div>
               <div class="col-md-6">
@@ -265,10 +353,19 @@
                 />
                 <input type="hidden" name="licenseImageBack" value={licenseImageBack} />
                 {#if licenseBackPreview}
-                  <img src={licenseBackPreview} alt="License Back" class="mt-2 rounded" style="max-width: 200px;" />
+                  <div class="mt-2">
+                    <img src={licenseBackPreview} alt="License Back" class="rounded" style="max-width: 200px;" />
+                    <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick={clearLicenseBack}>Remove</button>
+                  </div>
                 {/if}
               </div>
             </div>
+
+            {#if dbUser?.verificationStatus === 'VERIFIED' || dbUser?.verificationStatus === 'PENDING'}
+              <p class="text-muted">
+                <small>Note: Updating your documents will reset your verification status to PENDING.</small>
+              </p>
+            {/if}
 
             <button 
               type="submit" 
@@ -281,19 +378,8 @@
                 Request Verification
               {/if}
             </button>
-
-            {#if (licenseFrontPreview || licenseBackPreview) && (dbUser?.verificationStatus === 'VERIFIED' || dbUser?.verificationStatus === 'PENDING')}
-              <button type="button" class="btn btn-outline-danger ms-2" onclick={clearLicenseImages}>
-                Clear Documents
-              </button>
-            {/if}
+            <button type="button" class="btn btn-secondary ms-2" onclick={cancelVerificationEdit}>Cancel</button>
           </form>
-
-          {#if dbUser?.verificationStatus === 'VERIFIED' || dbUser?.verificationStatus === 'PENDING'}
-            <p class="text-muted mt-2">
-              <small>Note: Updating your documents will reset your verification status to PENDING.</small>
-            </p>
-          {/if}
         {/if}
       </div>
     </div>
