@@ -7,6 +7,8 @@
   let myVehicles = $state(data.myVehicles);
   let selectedMake = $state('');
   let selectedModel = $state('');
+  let selectedCanton = $state('');
+  let plateNumber = $state('');
 
   // Car makes and models
   const makes = ['Audi', 'BMW', 'Ford', 'Mercedes', 'Opel', 'Renault', 'Skoda', 'Tesla', 'Toyota', 'VW'];
@@ -24,8 +26,30 @@
     'VW': ['Golf', 'ID.3', 'ID.4', 'Passat', 'Polo', 'T-Cross', 'T-Roc', 'Tiguan']
   };
 
+  // Colors
+  const colors = ['Schwarz', 'Weiss', 'Silber', 'Grau', 'Rot', 'Blau', 'Grün', 'Braun', 'Beige', 'Orange', 'Gelb'];
+
+  // Years (2010 - current year)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 2009 }, (_, i) => currentYear - i);
+
+  // Swiss cantons
+  const cantons = ['AG', 'AI', 'AR', 'BE', 'BL', 'BS', 'FR', 'GE', 'GL', 'GR', 'JU', 'LU', 'NE', 'NW', 'OW', 'SG', 'SH', 'SO', 'SZ', 'TG', 'TI', 'UR', 'VD', 'VS', 'ZG', 'ZH'];
+
   // Get models for selected make
   const availableModels = $derived(selectedMake ? models[selectedMake] || [] : []);
+
+  // Combined plate hash
+  const plateHash = $derived(selectedCanton && plateNumber ? `${selectedCanton} ${plateNumber}` : '');
+
+  // Validate plate number (1-6 digits only)
+  function validatePlateNumber(event) {
+    let value = event.target.value.replace(/\D/g, ''); // Remove non-digits
+    if (value.length > 6) {
+      value = value.slice(0, 6);
+    }
+    plateNumber = value;
+  }
 
   // Reset model when make changes
   $effect(() => {
@@ -85,23 +109,49 @@
       </div>
     </div>
     <div class="row mb-3">
-      <div class="col-md-4">
+      <div class="col-md-3">
         <label class="form-label" for="seats">Seats *</label>
         <input class="form-control" id="seats" name="seats" type="number" min="1" max="9" value="4" required />
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3">
         <label class="form-label" for="year">Year</label>
-        <input class="form-control" id="year" name="year" type="number" min="1990" max="2030" placeholder="e.g. 2022" />
+        <select class="form-select" id="year" name="year">
+          <option value="">Select year...</option>
+          {#each years as year}
+            <option value={year}>{year}</option>
+          {/each}
+        </select>
       </div>
-      <div class="col-md-4">
-        <label class="form-label" for="color">Color</label>
-        <input class="form-control" id="color" name="color" type="text" placeholder="e.g. Red" />
+      <div class="col-md-3">
+        <label class="form-label" for="color">Color *</label>
+        <select class="form-select" id="color" name="color" required>
+          <option value="">Select color...</option>
+          {#each colors as color}
+            <option value={color}>{color}</option>
+          {/each}
+        </select>
       </div>
-    </div>
-    <div class="row mb-3">
-      <div class="col">
-        <label class="form-label" for="plateHash">License Plate *</label>
-        <input class="form-control" id="plateHash" name="plateHash" type="text" placeholder="e.g. ZH 123456" required />
+      <div class="col-md-3">
+        <label class="form-label">License Plate *</label>
+        <div class="input-group">
+          <select class="form-select" style="max-width: 80px;" bind:value={selectedCanton} required>
+            <option value="">--</option>
+            {#each cantons as canton}
+              <option value={canton}>{canton}</option>
+            {/each}
+          </select>
+          <input 
+            class="form-control" 
+            type="text" 
+            placeholder="123456" 
+            value={plateNumber}
+            oninput={validatePlateNumber}
+            required 
+            minlength="1"
+            maxlength="6"
+          />
+        </div>
+        <input type="hidden" name="plateHash" value={plateHash} />
       </div>
     </div>
     <button type="submit" class="btn btn-primary">Create Vehicle</button>
