@@ -27,7 +27,6 @@ import ch.zhaw.shareway.service.BookingService;
 import ch.zhaw.shareway.service.RideService;
 import ch.zhaw.shareway.service.UserService;
 
-
 /**
  * Controller for service-related endpoints
  * Handles business logic operations for rides and bookings
@@ -113,7 +112,8 @@ public class RideServiceController {
 
     /**
      * Book a ride for myself (Rider)
-     * PUT /api/service/me/bookride?rideId=...&seats=...&pickupLocation=...&message=...
+     * PUT
+     * /api/service/me/bookride?rideId=...&seats=...&pickupLocation=...&message=...
      */
     @PutMapping("/me/bookride")
     public ResponseEntity<Booking> bookRideForMe(
@@ -123,7 +123,7 @@ public class RideServiceController {
             @RequestParam(required = false) String message) {
         String userEmail = userService.getEmail();
         Optional<Booking> booking = bookingService.createBooking(
-            rideId, userEmail, seats, pickupLocation, message);
+                rideId, userEmail, seats, pickupLocation, message);
 
         if (booking.isPresent()) {
             return ResponseEntity.ok(booking.get());
@@ -231,5 +231,35 @@ public class RideServiceController {
         ride.setStatus(RideStatus.COMPLETED);
         Ride savedRide = rideRepository.save(ride);
         return ResponseEntity.ok(savedRide);
+    }
+
+    /**
+     * Cancel my booking (Rider)
+     * PUT /api/service/me/cancelbooking?bookingId=...
+     */
+    @PutMapping("/me/cancelbooking")
+    public ResponseEntity<Booking> cancelMyBooking(@RequestParam String bookingId) {
+        String userEmail = userService.getEmail();
+        Optional<Booking> booking = bookingService.cancelBooking(bookingId, userEmail);
+
+        if (booking.isPresent()) {
+            return ResponseEntity.ok(booking.get());
+        }
+        return ResponseEntity.badRequest().build();
+    }
+
+    /**
+     * Cancel my ride (Driver)
+     * PUT /api/service/me/cancelride?rideId=...
+     */
+    @PutMapping("/me/cancelride")
+    public ResponseEntity<Ride> cancelMyRide(@RequestParam String rideId) {
+        String userEmail = userService.getEmail();
+        Optional<Ride> ride = rideService.cancelRide(rideId, userEmail);
+
+        if (ride.isPresent()) {
+            return ResponseEntity.ok(ride.get());
+        }
+        return ResponseEntity.badRequest().build();
     }
 }

@@ -62,3 +62,28 @@ export async function load({ locals }) {
         users
     };
 }
+
+export const actions = {
+    cancelBooking: async ({ request, locals }) => {
+        const jwt_token = locals.jwt_token;
+
+        if (!jwt_token) {
+            return { success: false, error: 'Authentication required' };
+        }
+
+        const data = await request.formData();
+        const bookingId = data.get('bookingId');
+
+        try {
+            await axios({
+                method: "put",
+                url: `${API_BASE_URL}/api/service/me/cancelbooking?bookingId=${bookingId}`,
+                headers: { Authorization: "Bearer " + jwt_token },
+            });
+            return { success: true };
+        } catch (err) {
+            console.log('Error canceling booking:', err);
+            return { success: false, error: 'Could not cancel booking' };
+        }
+    }
+};

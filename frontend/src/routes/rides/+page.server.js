@@ -16,7 +16,11 @@ export async function load({ url, locals }) {
             nrOfPages: 0,
             currentPage: 1,
             currentUserEmail: '',
-            dbUser: null
+            dbUser: null,
+            filterFrom: '',
+            filterTo: '',
+            filterMaxPrice: '',
+            filterDate: ''
         };
     }
     
@@ -28,16 +32,48 @@ export async function load({ url, locals }) {
     const userEmail = user_info?.email || '';
     const currentPage = parseInt(url.searchParams.get('pageNumber') || '1');
     const pageSize = parseInt(url.searchParams.get('pageSize') || '10');
+    
+    // Filter parameters
+    const filterFrom = url.searchParams.get('from') || '';
+    const filterTo = url.searchParams.get('to') || '';
+    const filterMaxPrice = url.searchParams.get('maxPrice') || '';
+    const filterDate = url.searchParams.get('date') || '';
 
     // Load rides - nur OPEN
     try {
-        const query = `?pageSize=${pageSize}&pageNumber=${currentPage}&status=OPEN`;
+        let query = `?pageSize=${pageSize}&pageNumber=${currentPage}&status=OPEN`;
+        if (filterMaxPrice) {
+            query += `&maxPrice=${filterMaxPrice}`;
+        }
+        
         const ridesResponse = await axios({
             method: "get",
             url: `${API_BASE_URL}/api/rides` + query,
             headers: { Authorization: "Bearer " + jwt_token }
         });
-        rides = ridesResponse.data.content;
+        
+        let allRides = ridesResponse.data.content || [];
+        
+        // Client-side filtering for from/to/date (backend doesn't support these yet)
+        if (filterFrom) {
+            allRides = allRides.filter(r => 
+                r.startLocation.toLowerCase().includes(filterFrom.toLowerCase())
+            );
+        }
+        if (filterTo) {
+            allRides = allRides.filter(r => 
+                r.endLocation.toLowerCase().includes(filterTo.toLowerCase())
+            );
+        }
+        if (filterDate) {
+            allRides = allRides.filter(r => {
+                if (!r.departureTime) return false;
+                const rideDate = r.departureTime.split('T')[0];
+                return rideDate === filterDate;
+            });
+        }
+        
+        rides = allRides;
         nrOfPages = ridesResponse.data.totalPages || 0;
     } catch (err) {
         console.log('Error loading rides:', err);
@@ -86,6 +122,10 @@ export async function load({ url, locals }) {
         nrOfPages,
         currentPage,
         currentUserEmail: userEmail,
-        dbUser
+        dbUser,
+        filterFrom,
+        filterTo,
+        filterMaxPrice,
+        filterDate
     };
 }

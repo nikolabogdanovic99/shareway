@@ -7,13 +7,13 @@ const API_BASE_URL = process.env.API_BASE_URL;
 export async function load({ locals }) {
     const jwt_token = locals.jwt_token;
     const user_info = locals.user;
-    
+
     if (!jwt_token) {
         throw error(401, 'Authentication required');
     }
-    
+
     const userEmail = user_info?.email || '';
-    
+
     let vehicles = [];
     let rides = [];
     let bookings = [];
@@ -235,6 +235,28 @@ export const actions = {
         } catch (err) {
             console.log('Error rejecting booking:', err);
             return { success: false, error: 'Could not reject booking' };
+        }
+    },
+    cancelRide: async ({ request, locals }) => {
+        const jwt_token = locals.jwt_token;
+
+        if (!jwt_token) {
+            return { success: false, error: 'Authentication required' };
+        }
+
+        const data = await request.formData();
+        const rideId = data.get('rideId');
+
+        try {
+            await axios({
+                method: "put",
+                url: `${API_BASE_URL}/api/service/me/cancelride?rideId=${rideId}`,
+                headers: { Authorization: "Bearer " + jwt_token },
+            });
+            return { success: true, action: 'cancelRide' };
+        } catch (err) {
+            console.log('Error canceling ride:', err);
+            return { success: false, error: 'Could not cancel ride' };
         }
     }
 };
