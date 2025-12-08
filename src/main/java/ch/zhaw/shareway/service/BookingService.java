@@ -33,6 +33,8 @@ public class BookingService {
      * - Ride must exist
      * - Ride must be OPEN
      * - Enough seats must be available
+     * - Rider cannot book their own ride
+     * - Rider cannot book the same ride twice
      * 
      * @param rideId The ride to book
      * @param riderId The rider (email) requesting the booking
@@ -62,6 +64,16 @@ public class BookingService {
         }
         
         Ride ride = rideOpt.get();
+        
+        // Validate: Rider cannot book their own ride
+        if (ride.getDriverId().equals(riderId)) {
+            return Optional.empty();
+        }
+        
+        // Validate: Rider cannot book the same ride twice
+        if (bookingRepository.existsByRideIdAndRiderId(rideId, riderId)) {
+            return Optional.empty();
+        }
         
         // Validate: Ride must be OPEN
         if (ride.getStatus() != RideStatus.OPEN) {
