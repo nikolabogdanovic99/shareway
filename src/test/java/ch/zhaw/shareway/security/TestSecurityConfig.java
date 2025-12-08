@@ -16,7 +16,6 @@ public class TestSecurityConfig {
 
     public static final String ADMIN = "Bearer admin";
     public static final String USER = "Bearer user";
-    public static final String DRIVER = "Bearer driver";
     public static final String INVALID = "Bearer invalid";
 
     @Bean
@@ -25,20 +24,22 @@ public class TestSecurityConfig {
             @Override
             public Jwt decode(String token) {
                 var bearer = "Bearer " + token;
-                if (bearer.equals(ADMIN) || bearer.equals(USER) || bearer.equals(DRIVER)) {
-                    return createJwtWithRole(token);
+                if (bearer.equals(ADMIN)) {
+                    return createJwt("admin", "admin@test.com", List.of("admin"));
                 }
-                throw new AuthenticationException("Invalid JWT") {
-                };
+                if (bearer.equals(USER)) {
+                    return createJwt("user", "user@test.com", List.of("user"));
+                }
+                throw new AuthenticationException("Invalid JWT") {};
             }
         };
     }
 
-    private Jwt createJwtWithRole(String role) {
+    private Jwt createJwt(String subject, String email, List<String> roles) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("sub", "test-user");
-        claims.put("email", "test@test.com");
-        claims.put("user_roles", List.of(role));
+        claims.put("sub", subject);
+        claims.put("email", email);
+        claims.put("user_roles", roles);
 
         return new Jwt(
             "valid-token",

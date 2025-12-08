@@ -38,8 +38,8 @@ public class RideController {
 
     @PostMapping("/rides")
     public ResponseEntity<Ride> createRide(@RequestBody RideCreateDTO rideDTO) {
-        // Nur driver oder admin dürfen Rides erstellen
-        if (!userService.userHasRole("driver") && !userService.userHasRole("admin")) {
+        // Nur user oder admin dürfen Rides erstellen
+        if (!userService.userHasRole("user") && !userService.userHasRole("admin")) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
@@ -70,7 +70,6 @@ public class RideController {
         if (rideDTO.getDistanceKm() != null) {
             ride.setDistanceKm(rideDTO.getDistanceKm());
         }
-        // NEU: routeRadiusKm setzen
         if (rideDTO.getRouteRadiusKm() != null) {
             ride.setRouteRadiusKm(rideDTO.getRouteRadiusKm());
         }
@@ -120,7 +119,7 @@ public class RideController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        // Admin darf alle löschen, Driver nur eigene
+        // Admin darf alle löschen, User nur eigene
         String userEmail = userService.getEmail();
         boolean isAdmin = userService.userHasRole("admin");
         boolean isOwnRide = ride.get().getDriverId().equals(userEmail);

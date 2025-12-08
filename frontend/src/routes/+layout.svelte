@@ -32,7 +32,7 @@
           <li class="nav-item">
             <a class="nav-link" href="/bookings">My Bookings</a>
           </li>
-          {#if user.user_roles && (user.user_roles.includes("driver") || user.user_roles.includes("admin"))}
+          {#if user.user_roles && (user.user_roles.includes("user") || user.user_roles.includes("admin"))}
             <li class="nav-item">
               <a class="nav-link" href="/driver">Driver Dashboard</a>
             </li>

@@ -28,11 +28,10 @@ public class VehicleController {
     @Autowired
     UserService userService;
 
-    // POST /api/vehicles - Neues Fahrzeug erstellen
     @PostMapping("/vehicles")
     public ResponseEntity<Vehicle> createVehicle(@RequestBody VehicleCreateDTO dto) {
-        // Nur driver oder admin dürfen Vehicles erstellen
-        if (!userService.userHasRole("driver") && !userService.userHasRole("admin")) {
+        // Nur user oder admin dürfen Vehicles erstellen
+        if (!userService.userHasRole("user") && !userService.userHasRole("admin")) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
@@ -47,14 +46,12 @@ public class VehicleController {
         return new ResponseEntity<>(savedVehicle, HttpStatus.CREATED);
     }
 
-    // GET /api/vehicles - Alle Fahrzeuge
     @GetMapping("/vehicles")
     public ResponseEntity<List<Vehicle>> getAllVehicles() {
         List<Vehicle> allVehicles = vehicleRepository.findAll();
         return new ResponseEntity<>(allVehicles, HttpStatus.OK);
     }
 
-    // GET /api/vehicles/{id} - Fahrzeug by ID
     @GetMapping("/vehicles/{id}")
     public ResponseEntity<Vehicle> getVehicleById(@PathVariable String id) {
         Optional<Vehicle> optVehicle = vehicleRepository.findById(id);

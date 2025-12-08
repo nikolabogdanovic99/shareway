@@ -32,7 +32,6 @@ public class UserController {
     @Autowired
     UserService userService;
 
-    // POST /api/users - Neuen User erstellen
     @PostMapping("/users")
     public ResponseEntity<User> createUser(@RequestBody UserCreateDTO dto) {
         User user = new User(
@@ -46,14 +45,12 @@ public class UserController {
         return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
     }
 
-    // GET /api/users - Alle Users
     @GetMapping("/users")
     public ResponseEntity<List<User>> getAllUsers() {
         List<User> allUsers = userRepository.findAll();
         return new ResponseEntity<>(allUsers, HttpStatus.OK);
     }
 
-    // GET /api/users/{id} - User by ID
     @GetMapping("/users/{id}")
     public ResponseEntity<User> getUserById(@PathVariable String id) {
         Optional<User> optUser = userRepository.findById(id);
@@ -64,7 +61,6 @@ public class UserController {
         }
     }
 
-    // PUT /api/users/me/profile - Update Profil (Name, Nachname, Profilbild)
     @PutMapping("/users/me/profile")
     public ResponseEntity<User> updateMyProfile(@RequestBody UserProfileUpdateDTO dto) {
         String userEmail = userService.getEmail();
@@ -72,7 +68,6 @@ public class UserController {
         
         User user;
         
-        // Falls User nicht existiert, erstelle ihn
         if (optUser.isEmpty()) {
             String auth0Id = userService.getAuth0Id();
             String name = userService.getName();
@@ -80,10 +75,8 @@ public class UserController {
             UserRole role;
             if (userService.userHasRole("admin")) {
                 role = UserRole.ADMIN;
-            } else if (userService.userHasRole("driver")) {
-                role = UserRole.DRIVER;
             } else {
-                role = UserRole.RIDER;
+                role = UserRole.USER;
             }
             
             user = new User(auth0Id, userEmail, name, role);
@@ -91,7 +84,6 @@ public class UserController {
             user = optUser.get();
         }
         
-        // Update Profil-Felder (auch leere Werte erlauben)
         user.setFirstName(dto.getFirstName());
         user.setLastName(dto.getLastName());
         user.setProfileImage(dto.getProfileImage());
@@ -100,7 +92,6 @@ public class UserController {
         return new ResponseEntity<>(savedUser, HttpStatus.OK);
     }
 
-    // PUT /api/users/me/verification - Führerschein hochladen für Verifizierung
     @PutMapping("/users/me/verification")
     public ResponseEntity<User> requestVerification(@RequestBody UserProfileUpdateDTO dto) {
         String userEmail = userService.getEmail();
@@ -112,16 +103,13 @@ public class UserController {
         
         User user = optUser.get();
         
-        // Führerschein-Bilder speichern
         user.setLicenseImageFront(dto.getLicenseImageFront());
         user.setLicenseImageBack(dto.getLicenseImageBack());
         
-        // Wenn beide Bilder vorhanden, setze Status auf PENDING (auch wenn vorher VERIFIED)
         if (user.getLicenseImageFront() != null && !user.getLicenseImageFront().isEmpty() &&
             user.getLicenseImageBack() != null && !user.getLicenseImageBack().isEmpty()) {
             user.setVerificationStatus(VerificationStatus.PENDING);
         } else {
-            // Wenn Bilder fehlen/gelöscht, zurück auf UNVERIFIED
             user.setVerificationStatus(VerificationStatus.UNVERIFIED);
         }
         
@@ -129,7 +117,6 @@ public class UserController {
         return new ResponseEntity<>(savedUser, HttpStatus.OK);
     }
 
-    // GET /api/users/me - Eigene User-Daten aus DB
     @GetMapping("/users/me")
     public ResponseEntity<User> getMyUser() {
         String userEmail = userService.getEmail();
@@ -142,7 +129,6 @@ public class UserController {
         }
     }
 
-    // GET /api/users/pending - Alle Users mit Status PENDING (Admin only)
     @GetMapping("/users/pending")
     public ResponseEntity<List<User>> getPendingUsers() {
         if (!userService.userHasRole("admin")) {
@@ -152,5 +138,4 @@ public class UserController {
         List<User> pendingUsers = userRepository.findByVerificationStatus(VerificationStatus.PENDING);
         return new ResponseEntity<>(pendingUsers, HttpStatus.OK);
     }
-    
 }

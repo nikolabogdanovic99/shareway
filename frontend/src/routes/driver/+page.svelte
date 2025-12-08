@@ -192,7 +192,7 @@
   const isDriverOrAdmin = $derived(
     isAuthenticated &&
       user?.user_roles &&
-      (user.user_roles.includes("driver") || user.user_roles.includes("admin")),
+      (user.user_roles.includes("user") || user.user_roles.includes("admin")),
   );
 
   const isAdmin = $derived(
