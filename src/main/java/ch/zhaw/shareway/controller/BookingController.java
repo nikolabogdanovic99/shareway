@@ -38,6 +38,14 @@ public class BookingController {
             dto.getSeats()
         );
         
+        // Pickup Location setzen (Pflicht)
+        booking.setPickupLocation(dto.getPickupLocation());
+        
+        // Message setzen (optional)
+        if (dto.getMessage() != null && !dto.getMessage().isEmpty()) {
+            booking.setMessage(dto.getMessage());
+        }
+        
         // status = REQUESTED (default)
         // createdAt = now (default)
         

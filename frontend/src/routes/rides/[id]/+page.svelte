@@ -1,5 +1,6 @@
 <script>
   import { enhance } from "$app/forms";
+  import LocationAutocomplete from "$lib/components/LocationAutocomplete.svelte";
   
   let { data, form } = $props();
 
@@ -12,6 +13,10 @@
   let currentUserEmail = $state(data.currentUserEmail);
 
   let selectedRating = $state(5);
+  
+  // Booking form states
+  let pickupLocation = $state('');
+  let bookingMessage = $state('');
 
   $effect(() => {
     ride = data.ride;
@@ -83,7 +88,7 @@
   <a href="/rides" class="btn btn-outline-secondary btn-sm mb-3">← Back to Rides</a>
 
   {#if form?.success && form?.action === 'booked'}
-    <div class="alert alert-success">Ride booked successfully!</div>
+    <div class="alert alert-success">Ride booked successfully! The driver will review your request.</div>
   {/if}
 
   {#if form?.success && form?.action === 'reviewed'}
@@ -121,6 +126,9 @@
                 {#if ride.distanceKm}
                   <p><strong>Distance:</strong> {ride.distanceKm} km</p>
                 {/if}
+                {#if ride.routeRadiusKm}
+                  <p><strong>Max. Pickup Detour:</strong> {ride.routeRadiusKm} km</p>
+                {/if}
               </div>
             </div>
             {#if ride.description}
@@ -140,11 +148,55 @@
               {/if}
               <span class="badge bg-secondary">Your Ride</span>
             {:else if myBooking}
-              <p><strong>Your Booking:</strong> <span class="badge bg-info">{myBooking.status}</span></p>
+              <div class="alert alert-info mb-0">
+                <strong>Your Booking:</strong> <span class="badge bg-info">{myBooking.status}</span>
+                {#if myBooking.pickupLocation}
+                  <br><small>📍 Pickup: {myBooking.pickupLocation}</small>
+                {/if}
+              </div>
             {:else if ride.status === 'OPEN' && ride.seatsFree > 0}
-              <form method="POST" action="?/bookRide" use:enhance>
-                <button type="submit" class="btn btn-primary">Book this Ride</button>
-              </form>
+              <!-- Booking Form with Pickup Location -->
+              <div class="card bg-light">
+                <div class="card-body">
+                  <h6 class="card-title mb-3">Book this Ride</h6>
+                  <form method="POST" action="?/bookRide" use:enhance>
+                    <!-- Hidden inputs für Form-Daten -->
+                    <input type="hidden" name="pickupLocation" value={pickupLocation} />
+                    <input type="hidden" name="message" value={bookingMessage} />
+                    
+                    <div class="mb-3">
+                      <label class="form-label" for="pickupLocation">
+                        📍 Pickup Location *
+                      </label>
+                      <LocationAutocomplete 
+                        id="pickupLocation" 
+                        placeholder="Where should the driver pick you up?" 
+                        bind:value={pickupLocation}
+                        required={true}
+                      />
+                      <small class="text-muted">Select a location from the suggestions</small>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label" for="bookingMessage">
+                        💬 Message to Driver (optional)
+                      </label>
+                      <input 
+                        class="form-control" 
+                        id="bookingMessage" 
+                        type="text" 
+                        placeholder="e.g. I have a small suitcase, I'll be wearing a red jacket"
+                        bind:value={bookingMessage}
+                      />
+                    </div>
+                    <button type="submit" class="btn btn-primary" disabled={!pickupLocation}>
+                      Request Booking
+                    </button>
+                    {#if !pickupLocation}
+                      <small class="text-muted ms-2">Please select a pickup location</small>
+                    {/if}
+                  </form>
+                </div>
+              </div>
             {:else if ride.status === 'FULL'}
               <span class="badge bg-warning text-dark">Ride is full</span>
             {:else if ride.status === 'COMPLETED'}

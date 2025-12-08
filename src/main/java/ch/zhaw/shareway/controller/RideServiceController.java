@@ -113,14 +113,17 @@ public class RideServiceController {
 
     /**
      * Book a ride for myself (Rider)
-     * PUT /api/service/me/bookride?rideId=...&seats=...
+     * PUT /api/service/me/bookride?rideId=...&seats=...&pickupLocation=...&message=...
      */
     @PutMapping("/me/bookride")
     public ResponseEntity<Booking> bookRideForMe(
             @RequestParam String rideId,
-            @RequestParam(defaultValue = "1") int seats) {
+            @RequestParam(defaultValue = "1") int seats,
+            @RequestParam(required = false) String pickupLocation,
+            @RequestParam(required = false) String message) {
         String userEmail = userService.getEmail();
-        Optional<Booking> booking = bookingService.createBooking(rideId, userEmail, seats);
+        Optional<Booking> booking = bookingService.createBooking(
+            rideId, userEmail, seats, pickupLocation, message);
 
         if (booking.isPresent()) {
             return ResponseEntity.ok(booking.get());

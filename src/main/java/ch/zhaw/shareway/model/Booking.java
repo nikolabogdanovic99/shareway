@@ -9,13 +9,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;  // ← NEU!
+import lombok.Setter;
 
 @Document("bookings")
 @NoArgsConstructor
 @RequiredArgsConstructor
 @Getter
-@Setter  // ← NEU! Generiert alle Setter-Methoden
+@Setter
 public class Booking {
     @Id
     private String id;
@@ -31,7 +31,9 @@ public class Booking {
     
     private BookingStatus status = BookingStatus.REQUESTED;
     
-    private String message;
+    private String pickupLocation;  // Wo soll der Rider abgeholt werden?
+    
+    private String message;  // Optionale Nachricht an den Fahrer
     
     private LocalDateTime createdAt = LocalDateTime.now();
     

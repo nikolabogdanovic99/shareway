@@ -1,6 +1,7 @@
 <script>
   import { enhance } from "$app/forms";
   import { invalidateAll } from "$app/navigation";
+  import LocationAutocomplete from "$lib/components/LocationAutocomplete.svelte";
   
   let { data, form } = $props();
 
@@ -13,6 +14,11 @@
   let isAuthenticated = $state(data.isAuthenticated);
 
   let activeTab = $state('rides');
+
+  // Ride form states
+  let startLocation = $state('');
+  let endLocation = $state('');
+  let routeRadiusKm = $state(5);
 
   // Vehicle form states
   let selectedMake = $state('');
@@ -68,13 +74,18 @@
     }
   });
 
-  // Reset vehicle form after success
+  // Reset forms after success
   $effect(() => {
     if (form?.success && form?.action === 'vehicle') {
       selectedMake = '';
       selectedModel = '';
       selectedCanton = '';
       plateNumber = '';
+    }
+    if (form?.success && form?.action === 'ride') {
+      startLocation = '';
+      endLocation = '';
+      routeRadiusKm = 5;
     }
   });
 
@@ -147,7 +158,7 @@
     return `${mins}min`;
   }
 
-  // Pending bookings count - FIXED: REQUESTED instead of PENDING
+  // Pending bookings count
   const pendingBookings = $derived(bookings.filter(b => b.status === 'REQUESTED'));
   const openRides = $derived(rides.filter(r => r.status === 'OPEN'));
 </script>
@@ -314,11 +325,23 @@
             <div class="row mb-3">
               <div class="col-md-4">
                 <label class="form-label" for="startLocation">From *</label>
-                <input class="form-control" id="startLocation" name="startLocation" type="text" placeholder="e.g. Zürich HB" required />
+                <LocationAutocomplete 
+                  id="startLocation" 
+                  name="startLocation" 
+                  placeholder="e.g. Zürich HB" 
+                  bind:value={startLocation}
+                  required={true}
+                />
               </div>
               <div class="col-md-4">
                 <label class="form-label" for="endLocation">To *</label>
-                <input class="form-control" id="endLocation" name="endLocation" type="text" placeholder="e.g. Bern" required />
+                <LocationAutocomplete 
+                  id="endLocation" 
+                  name="endLocation" 
+                  placeholder="e.g. Bern" 
+                  bind:value={endLocation}
+                  required={true}
+                />
               </div>
               <div class="col-md-2">
                 <label class="form-label" for="pricePerSeat">Price (CHF) *</label>
@@ -329,9 +352,26 @@
                 <input class="form-control" id="seatsTotal" name="seatsTotal" type="number" min="1" max="8" value="3" required />
               </div>
             </div>
-            <div class="mb-3">
-              <label class="form-label" for="description">Description (optional)</label>
-              <input class="form-control" id="description" name="description" type="text" placeholder="e.g. No smoking, pets welcome..." />
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label" for="description">Description (optional)</label>
+                <input class="form-control" id="description" name="description" type="text" placeholder="e.g. No smoking, pets welcome..." />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="routeRadiusKm">
+                  Max. Pickup Detour: <strong>{routeRadiusKm} km</strong>
+                </label>
+                <input 
+                  class="form-range" 
+                  id="routeRadiusKm" 
+                  name="routeRadiusKm" 
+                  type="range" 
+                  min="1" 
+                  max="20" 
+                  bind:value={routeRadiusKm}
+                />
+                <small class="text-muted">How far are you willing to detour for pickups?</small>
+              </div>
             </div>
             <button type="submit" class="btn btn-primary">Create Ride</button>
           </form>
@@ -395,7 +435,15 @@
               <div class="card-body">
                 <h6 class="card-title">{ride?.startLocation} → {ride?.endLocation}</h6>
                 <p class="card-text mb-1"><small class="text-muted">{formatDate(ride?.departureTime)}</small></p>
-                <p class="card-text mb-2"><strong>Rider:</strong> {getRiderName(booking.riderId)}</p>
+                <hr class="my-2" />
+                <p class="card-text mb-1"><strong>👤 Rider:</strong> {getRiderName(booking.riderId)}</p>
+                {#if booking.pickupLocation}
+                  <p class="card-text mb-1"><strong>📍 Pickup:</strong> {booking.pickupLocation}</p>
+                {/if}
+                {#if booking.message}
+                  <p class="card-text mb-1"><strong>💬 Message:</strong></p>
+                  <p class="card-text text-muted fst-italic">"{booking.message}"</p>
+                {/if}
                 <p class="card-text"><small>Seats requested: {booking.seatsBooked || booking.seats}</small></p>
               </div>
               <div class="card-footer d-flex gap-2">
@@ -423,6 +471,7 @@
           <tr>
             <th>Ride</th>
             <th>Rider</th>
+            <th>Pickup</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -432,6 +481,7 @@
             <tr>
               <td>{ride?.startLocation} → {ride?.endLocation}</td>
               <td>{getRiderName(booking.riderId)}</td>
+              <td>{booking.pickupLocation || '-'}</td>
               <td>
                 <span class="badge" class:bg-success={booking.status === 'APPROVED'} class:bg-danger={booking.status === 'REJECTED'}>
                   {booking.status}

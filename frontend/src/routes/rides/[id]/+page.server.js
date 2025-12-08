@@ -95,7 +95,7 @@ export async function load({ params, locals }) {
 }
 
 export const actions = {
-    bookRide: async ({ params, locals }) => {
+    bookRide: async ({ request, params, locals }) => {
         const jwt_token = locals.jwt_token;
         const rideId = params.id;
 
@@ -103,10 +103,26 @@ export const actions = {
             throw error(401, 'Authentication required');
         }
 
+        const data = await request.formData();
+        const pickupLocation = data.get('pickupLocation') || '';
+        const message = data.get('message') || '';
+
+        if (!pickupLocation) {
+            return { success: false, error: 'Please select a pickup location' };
+        }
+
         try {
+            const url = new URL(`${API_BASE_URL}/api/service/me/bookride`);
+            url.searchParams.append('rideId', rideId);
+            url.searchParams.append('seats', '1');
+            url.searchParams.append('pickupLocation', pickupLocation);
+            if (message) {
+                url.searchParams.append('message', message);
+            }
+
             await axios({
                 method: "put",
-                url: `${API_BASE_URL}/api/service/me/bookride?rideId=${rideId}&seats=1`,
+                url: url.toString(),
                 headers: { Authorization: "Bearer " + jwt_token },
             });
             return { success: true, action: 'booked' };

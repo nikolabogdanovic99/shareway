@@ -40,6 +40,21 @@ public class BookingService {
      * @return Optional containing the created booking, or empty if validation fails
      */
     public Optional<Booking> createBooking(String rideId, String riderId, int seats) {
+        return createBooking(rideId, riderId, seats, null, null);
+    }
+    
+    /**
+     * Create a booking for a ride with pickup location and message
+     * 
+     * @param rideId The ride to book
+     * @param riderId The rider (email) requesting the booking
+     * @param seats Number of seats to book
+     * @param pickupLocation Where to pick up the rider
+     * @param message Optional message to the driver
+     * @return Optional containing the created booking, or empty if validation fails
+     */
+    public Optional<Booking> createBooking(String rideId, String riderId, int seats, 
+                                           String pickupLocation, String message) {
         Optional<Ride> rideOpt = rideRepository.findById(rideId);
         
         if (rideOpt.isEmpty()) {
@@ -61,6 +76,16 @@ public class BookingService {
         // Create booking using constructor
         Booking booking = new Booking(rideId, riderId, seats);
         booking.setUpdatedAt(LocalDateTime.now());
+        
+        // Set pickup location
+        if (pickupLocation != null && !pickupLocation.isEmpty()) {
+            booking.setPickupLocation(pickupLocation);
+        }
+        
+        // Set message
+        if (message != null && !message.isEmpty()) {
+            booking.setMessage(message);
+        }
         
         return Optional.of(bookingRepository.save(booking));
     }

@@ -70,6 +70,10 @@ public class RideController {
         if (rideDTO.getDistanceKm() != null) {
             ride.setDistanceKm(rideDTO.getDistanceKm());
         }
+        // NEU: routeRadiusKm setzen
+        if (rideDTO.getRouteRadiusKm() != null) {
+            ride.setRouteRadiusKm(rideDTO.getRouteRadiusKm());
+        }
 
         Ride savedRide = rideRepository.save(ride);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedRide);

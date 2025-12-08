@@ -171,7 +171,8 @@ export const actions = {
             durationMinutes: parseInt(data.get('durationMinutes')),
             pricePerSeat: parseFloat(data.get('pricePerSeat')),
             seatsTotal: parseInt(data.get('seatsTotal')),
-            description: data.get('description') || null
+            description: data.get('description') || null,
+            routeRadiusKm: parseFloat(data.get('routeRadiusKm')) || 5.0
         };
 
         try {

@@ -9,5 +9,6 @@ public class BookingCreateDTO {
     private String rideId;
     private String riderId; // Später aus JWT (Auth0)
     private Integer seats;
-    private String message; // Optional
+    private String pickupLocation;  // Wo soll abgeholt werden?
+    private String message; // Nachricht an den Fahrer
 }

@@ -1,11 +1,15 @@
 <script>
   import { enhance } from "$app/forms";
+  import LocationAutocomplete from "$lib/components/LocationAutocomplete.svelte";
   
   let { data, form } = $props();
   let { user, isAuthenticated, dbUser } = data;
 
   let myVehicles = $state(data.myVehicles);
   let myRides = $state(data.myRides);
+
+  let startLocation = $state('');
+  let endLocation = $state('');
 
   $effect(() => {
     myVehicles = data.myVehicles;
@@ -109,11 +113,23 @@
     <div class="row mb-3">
       <div class="col-md-6">
         <label class="form-label" for="startLocation">Start Location *</label>
-        <input class="form-control" id="startLocation" name="startLocation" type="text" placeholder="e.g. Zürich HB" required />
+        <LocationAutocomplete 
+          id="startLocation" 
+          name="startLocation" 
+          placeholder="e.g. Zürich HB" 
+          bind:value={startLocation}
+          required={true}
+        />
       </div>
       <div class="col-md-6">
         <label class="form-label" for="endLocation">End Location *</label>
-        <input class="form-control" id="endLocation" name="endLocation" type="text" placeholder="e.g. Bern Bahnhof" required />
+        <LocationAutocomplete 
+          id="endLocation" 
+          name="endLocation" 
+          placeholder="e.g. Bern Bahnhof" 
+          bind:value={endLocation}
+          required={true}
+        />
       </div>
     </div>
 
