@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ch.zhaw.shareway.model.Ride;
 import ch.zhaw.shareway.model.RideCreateDTO;
 import ch.zhaw.shareway.model.RideStatus;
+import ch.zhaw.shareway.repository.BookingRepository;
 import ch.zhaw.shareway.repository.RideRepository;
 import ch.zhaw.shareway.service.RideService;
 import ch.zhaw.shareway.service.UserService;
@@ -29,6 +30,9 @@ public class RideController {
 
     @Autowired
     private RideRepository rideRepository;
+
+    @Autowired
+    private BookingRepository bookingRepository;
 
     @Autowired
     private RideService rideService;
@@ -70,6 +74,7 @@ public class RideController {
         if (rideDTO.getDistanceKm() != null) {
             ride.setDistanceKm(rideDTO.getDistanceKm());
         }
+        // NEU: routeRadiusKm setzen
         if (rideDTO.getRouteRadiusKm() != null) {
             ride.setRouteRadiusKm(rideDTO.getRouteRadiusKm());
         }
@@ -119,7 +124,7 @@ public class RideController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        // Admin darf alle löschen, User nur eigene
+        // Admin darf alle löschen, Driver nur eigene
         String userEmail = userService.getEmail();
         boolean isAdmin = userService.userHasRole("admin");
         boolean isOwnRide = ride.get().getDriverId().equals(userEmail);
@@ -127,6 +132,9 @@ public class RideController {
         if (!isAdmin && !isOwnRide) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
+
+        // Delete all bookings for this ride first
+        bookingRepository.deleteByRideId(id);
 
         rideRepository.deleteById(id);
         return ResponseEntity.status(HttpStatus.OK).body("DELETED");

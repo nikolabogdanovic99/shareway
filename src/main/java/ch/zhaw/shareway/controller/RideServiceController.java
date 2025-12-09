@@ -247,19 +247,4 @@ public class RideServiceController {
         }
         return ResponseEntity.badRequest().build();
     }
-
-    /**
-     * Cancel my ride (Driver)
-     * PUT /api/service/me/cancelride?rideId=...
-     */
-    @PutMapping("/me/cancelride")
-    public ResponseEntity<Ride> cancelMyRide(@RequestParam String rideId) {
-        String userEmail = userService.getEmail();
-        Optional<Ride> ride = rideService.cancelRide(rideId, userEmail);
-
-        if (ride.isPresent()) {
-            return ResponseEntity.ok(ride.get());
-        }
-        return ResponseEntity.badRequest().build();
-    }
 }

@@ -358,7 +358,7 @@
       {:else if form.action === "ride"}Ride created successfully!
       {:else if form.action === "approve"}Booking approved!
       {:else if form.action === "reject"}Booking rejected!
-      {:else if form.action === "cancelRide"}Ride canceled successfully!
+      {:else if form.action === "deleteRide"}Ride deleted successfully!
       {/if}
     </div>
   {/if}
@@ -589,7 +589,7 @@
                   class:bg-success={ride.status === "OPEN"}
                   class:bg-warning={ride.status === "FULL"}
                   class:bg-primary={ride.status === "IN_PROGRESS"}
-                  class:bg-secondary={ride.status === "COMPLETED" || ride.status === "CANCELED"}
+                  class:bg-secondary={ride.status === "COMPLETED"}
                 >
                   {ride.status}
                 </span>
@@ -598,12 +598,20 @@
                 {#if ride.status === "OPEN" || ride.status === "FULL"}
                   <form
                     method="POST"
-                    action="?/cancelRide"
+                    action="?/deleteRide"
                     use:enhance={handleSubmit}
                     class="d-inline"
                   >
                     <input type="hidden" name="rideId" value={ride.id} />
-                    <button type="submit" class="btn btn-outline-danger btn-sm">Cancel</button>
+                    <button 
+                      type="submit" 
+                      class="btn btn-outline-danger btn-sm"
+                      onclick={(e) => {
+                        if (!confirm('Delete this ride? All bookings will be removed.')) {
+                          e.preventDefault();
+                        }
+                      }}
+                    >Delete</button>
                   </form>
                 {/if}
               </td>

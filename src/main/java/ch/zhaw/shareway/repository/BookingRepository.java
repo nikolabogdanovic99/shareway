@@ -30,4 +30,7 @@ public interface BookingRepository extends MongoRepository<Booking, String> {
     
     // NEU: Prüfen ob Rider bereits für diese Ride gebucht hat
     boolean existsByRideIdAndRiderId(String rideId, String riderId);
+
+    // Alle Bookings für eine Ride löschen
+    void deleteByRideId(String rideId);
 }

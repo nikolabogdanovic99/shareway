@@ -8,11 +8,11 @@ export async function load({ params, locals }) {
     const jwt_token = locals.jwt_token;
     const user_info = locals.user;
     const rideId = params.id;
-    
+
     if (!jwt_token) {
         throw error(401, 'Authentication required');
     }
-    
+
     let ride = null;
     let driver = null;
     let vehicle = null;
@@ -90,7 +90,8 @@ export async function load({ params, locals }) {
         reviews,
         myBooking,
         users,
-        currentUserEmail: user_info?.email || ''
+        currentUserEmail: user_info?.email || '',
+        user: user_info
     };
 }
 
@@ -185,6 +186,90 @@ export const actions = {
         } catch (err) {
             console.log('Error completing ride:', err);
             return { success: false, error: 'Could not complete ride' };
+        }
+    }
+    ,
+
+    deleteRide: async ({ params, locals }) => {
+        const jwt_token = locals.jwt_token;
+        const rideId = params.id;
+
+        if (!jwt_token) {
+            throw error(401, 'Authentication required');
+        }
+
+        try {
+            await axios({
+                method: "delete",
+                url: `${API_BASE_URL}/api/rides/${rideId}`,
+                headers: { Authorization: "Bearer " + jwt_token },
+            });
+            return { success: true, action: 'deleted' };
+        } catch (err) {
+            console.log('Error deleting ride:', err);
+            if (err.response?.status === 403) {
+                return { success: false, error: 'You are not authorized to delete this ride' };
+            }
+            return { success: false, error: 'Could not delete ride' };
+        }
+    }
+    ,
+
+    updateRide: async ({ request, params, locals }) => {
+        const jwt_token = locals.jwt_token;
+        const rideId = params.id;
+
+        if (!jwt_token) {
+            throw error(401, 'Authentication required');
+        }
+
+        const data = await request.formData();
+        const updateData = {
+            departureTime: data.get('departureTime'),
+            pricePerSeat: parseFloat(data.get('pricePerSeat')),
+            description: data.get('description') || '',
+            routeRadiusKm: parseFloat(data.get('routeRadiusKm')) || 5.0
+        };
+
+        try {
+            await axios({
+                method: "put",
+                url: `${API_BASE_URL}/api/rides/${rideId}`,
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer " + jwt_token,
+                },
+                data: updateData,
+            });
+            return { success: true, action: 'updated' };
+        } catch (err) {
+            console.log('Error updating ride:', err);
+            if (err.response?.status === 403) {
+                return { success: false, error: 'You are not authorized to edit this ride' };
+            }
+            return { success: false, error: 'Could not update ride' };
+        }
+    }
+    ,
+
+    cancelRide: async ({ params, locals }) => {
+        const jwt_token = locals.jwt_token;
+        const rideId = params.id;
+
+        if (!jwt_token) {
+            throw error(401, 'Authentication required');
+        }
+
+        try {
+            await axios({
+                method: "put",
+                url: `${API_BASE_URL}/api/service/me/cancelride?rideId=${rideId}`,
+                headers: { Authorization: "Bearer " + jwt_token },
+            });
+            return { success: true, action: 'canceled' };
+        } catch (err) {
+            console.log('Error canceling ride:', err);
+            return { success: false, error: 'Could not cancel ride' };
         }
     }
 }

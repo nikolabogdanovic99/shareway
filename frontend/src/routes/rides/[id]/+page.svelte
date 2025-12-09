@@ -1,5 +1,6 @@
 <script>
   import { enhance } from "$app/forms";
+  import { goto } from "$app/navigation";
   import LocationAutocomplete from "$lib/components/LocationAutocomplete.svelte";
   import Map from "$lib/components/Map.svelte";
   
@@ -12,12 +13,20 @@
   let myBooking = $state(data.myBooking);
   let users = $state(data.users);
   let currentUserEmail = $state(data.currentUserEmail);
+  let user = $state(data.user);
 
   let selectedRating = $state(5);
   
   // Booking form states
   let pickupLocation = $state('');
   let bookingMessage = $state('');
+
+  // Edit mode
+  let isEditing = $state(false);
+  let editDepartureTime = $state('');
+  let editPricePerSeat = $state(0);
+  let editDescription = $state('');
+  let editRouteRadiusKm = $state(5);
 
   $effect(() => {
     ride = data.ride;
@@ -26,7 +35,16 @@
     reviews = data.reviews;
     myBooking = data.myBooking;
     currentUserEmail = data.currentUserEmail;
+    user = data.user;
+    
+    // Reset edit mode on successful update
+    if (form?.success && form?.action === 'updated') {
+      isEditing = false;
+    }
   });
+
+  // Check if user is admin
+  const isAdmin = $derived(user?.user_roles?.includes("admin"));
 
   // Format date
   function formatDate(dateString) {
@@ -73,6 +91,42 @@
     isMyRide && (ride?.status === 'OPEN' || ride?.status === 'IN_PROGRESS')
   );
 
+  // Check if ride can be deleted (Admin OR own ride that's not completed)
+  const canDeleteRide = $derived(
+    isAdmin || (isMyRide && ride?.status !== 'COMPLETED')
+  );
+
+  // Check if ride can be edited
+  const canEditRide = $derived(
+    (isAdmin && ride?.status !== 'COMPLETED') || 
+    (isMyRide && ride?.status === 'OPEN')
+  );
+
+  // Start editing
+  function startEditing() {
+    const dt = new Date(ride.departureTime);
+    const formatted = dt.toISOString().slice(0, 16);
+    editDepartureTime = formatted;
+    editPricePerSeat = ride.pricePerSeat;
+    editDescription = ride.description || '';
+    editRouteRadiusKm = ride.routeRadiusKm || 5;
+    isEditing = true;
+  }
+
+  // Cancel editing
+  function cancelEditing() {
+    isEditing = false;
+  }
+
+  // Handle delete with confirmation and redirect
+  function handleDelete() {
+    return async ({ result }) => {
+      if (result.type === 'success' && result.data?.action === 'deleted') {
+        goto('/rides');
+      }
+    };
+  }
+
   // Status badge class
   function getStatusClass(status) {
     switch (status) {
@@ -100,6 +154,10 @@
     <div class="alert alert-success">Ride completed successfully! Riders can now leave reviews.</div>
   {/if}
 
+  {#if form?.success && form?.action === 'updated'}
+    <div class="alert alert-success">Ride updated successfully!</div>
+  {/if}
+
   {#if form?.error}
     <div class="alert alert-danger">{form.error}</div>
   {/if}
@@ -111,7 +169,29 @@
         <div class="card mb-4">
           <div class="card-header d-flex justify-content-between align-items-center">
             <h4 class="mb-0">{ride.startLocation} → {ride.endLocation}</h4>
-            <span class="badge {getStatusClass(ride.status)}">{ride.status}</span>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge {getStatusClass(ride.status)}">{ride.status}</span>
+              {#if canEditRide && !isEditing}
+                <button class="btn btn-outline-primary btn-sm" onclick={startEditing}>
+                  ✏️ Edit
+                </button>
+              {/if}
+              {#if canDeleteRide}
+                <form method="POST" action="?/deleteRide" use:enhance={handleDelete}>
+                  <button 
+                    type="submit" 
+                    class="btn btn-danger btn-sm"
+                    onclick={(e) => {
+                      if (!confirm('Delete this ride? All bookings will be removed.')) {
+                        e.preventDefault();
+                      }
+                    }}
+                  >
+                    🗑️ Delete
+                  </button>
+                </form>
+              {/if}
+            </div>
           </div>
           <div class="card-body">
             <!-- 🗺️ MAP -->
@@ -125,28 +205,85 @@
 
             <hr />
 
-            <div class="row">
-              <div class="col-md-6">
-                <p><strong>Departure:</strong> {formatDate(ride.departureTime)}</p>
-                <p><strong>Price per Seat:</strong> CHF {ride.pricePerSeat}</p>
-                <p><strong>Available Seats:</strong> {ride.seatsFree} / {ride.seatsTotal}</p>
+            {#if isEditing}
+              <!-- Edit Mode -->
+              <form method="POST" action="?/updateRide" use:enhance>
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label" for="editDepartureTime">Departure Time</label>
+                    <input 
+                      type="datetime-local" 
+                      class="form-control" 
+                      id="editDepartureTime"
+                      name="departureTime"
+                      bind:value={editDepartureTime}
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="editPricePerSeat">Price per Seat (CHF)</label>
+                    <input 
+                      type="number" 
+                      class="form-control" 
+                      id="editPricePerSeat"
+                      name="pricePerSeat"
+                      min="0"
+                      step="0.5"
+                      bind:value={editPricePerSeat}
+                    />
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label" for="editRouteRadiusKm">Max. Pickup Detour (km)</label>
+                  <input 
+                    type="number" 
+                    class="form-control" 
+                    id="editRouteRadiusKm"
+                    name="routeRadiusKm"
+                    min="1"
+                    max="20"
+                    bind:value={editRouteRadiusKm}
+                  />
+                </div>
+                <div class="mb-3">
+                  <label class="form-label" for="editDescription">Description</label>
+                  <textarea 
+                    class="form-control" 
+                    id="editDescription"
+                    name="description"
+                    rows="3"
+                    bind:value={editDescription}
+                  ></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                  <button type="submit" class="btn btn-primary">Save Changes</button>
+                  <button type="button" class="btn btn-secondary" onclick={cancelEditing}>Cancel</button>
+                </div>
+              </form>
+            {:else}
+              <!-- View Mode -->
+              <div class="row">
+                <div class="col-md-6">
+                  <p><strong>Departure:</strong> {formatDate(ride.departureTime)}</p>
+                  <p><strong>Price per Seat:</strong> CHF {ride.pricePerSeat}</p>
+                  <p><strong>Available Seats:</strong> {ride.seatsFree} / {ride.seatsTotal}</p>
+                </div>
+                <div class="col-md-6">
+                  {#if ride.durationMinutes}
+                    <p><strong>Duration:</strong> {formatDuration(ride.durationMinutes)}</p>
+                  {/if}
+                  {#if ride.distanceKm}
+                    <p><strong>Distance:</strong> {ride.distanceKm} km</p>
+                  {/if}
+                  {#if ride.routeRadiusKm}
+                    <p><strong>Max. Pickup Detour:</strong> {ride.routeRadiusKm} km</p>
+                  {/if}
+                </div>
               </div>
-              <div class="col-md-6">
-                {#if ride.durationMinutes}
-                  <p><strong>Duration:</strong> {formatDuration(ride.durationMinutes)}</p>
-                {/if}
-                {#if ride.distanceKm}
-                  <p><strong>Distance:</strong> {ride.distanceKm} km</p>
-                {/if}
-                {#if ride.routeRadiusKm}
-                  <p><strong>Max. Pickup Detour:</strong> {ride.routeRadiusKm} km</p>
-                {/if}
-              </div>
-            </div>
-            {#if ride.description}
-              <hr />
-              <p><strong>Description:</strong></p>
-              <p>{ride.description}</p>
+              {#if ride.description}
+                <hr />
+                <p><strong>Description:</strong></p>
+                <p>{ride.description}</p>
+              {/if}
             {/if}
 
             <hr />
