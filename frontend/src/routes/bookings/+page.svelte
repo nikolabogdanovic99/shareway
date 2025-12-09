@@ -1,6 +1,7 @@
 <script>
   import { enhance } from "$app/forms";
   import { invalidateAll } from "$app/navigation";
+  import Map from "$lib/components/Map.svelte";
   
   let { data, form } = $props();
 

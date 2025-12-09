@@ -1,6 +1,7 @@
 <script>
   import { enhance } from "$app/forms";
   import LocationAutocomplete from "$lib/components/LocationAutocomplete.svelte";
+  import Map from "$lib/components/Map.svelte";
   
   let { data, form } = $props();
 
@@ -113,6 +114,17 @@
             <span class="badge {getStatusClass(ride.status)}">{ride.status}</span>
           </div>
           <div class="card-body">
+            <!-- 🗺️ MAP -->
+            <div class="mb-4">
+              <Map startLocation={ride.startLocation} endLocation={ride.endLocation} />
+              <div class="d-flex justify-content-between mt-2">
+                <small class="text-success">● Start: {ride.startLocation}</small>
+                <small class="text-danger">● Destination: {ride.endLocation}</small>
+              </div>
+            </div>
+
+            <hr />
+
             <div class="row">
               <div class="col-md-6">
                 <p><strong>Departure:</strong> {formatDate(ride.departureTime)}</p>
