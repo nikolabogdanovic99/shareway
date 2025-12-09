@@ -13,4 +13,5 @@ public class UserProfileUpdateDTO {
     private String profileImage;
     private String licenseImageFront;
     private String licenseImageBack;
+    private String phoneNumber;
 }

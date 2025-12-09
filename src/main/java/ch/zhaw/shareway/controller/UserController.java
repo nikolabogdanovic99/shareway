@@ -87,6 +87,7 @@ public class UserController {
         user.setFirstName(dto.getFirstName());
         user.setLastName(dto.getLastName());
         user.setProfileImage(dto.getProfileImage());
+        user.setPhoneNumber(dto.getPhoneNumber());
         
         User savedUser = userRepository.save(user);
         return new ResponseEntity<>(savedUser, HttpStatus.OK);

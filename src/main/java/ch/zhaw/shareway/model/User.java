@@ -52,6 +52,9 @@ public class User {
     private String pictureUrl;
 
     @Setter
+    private String phoneNumber;
+
+    @Setter
     private Double rating = 0.0;
 
     @Setter

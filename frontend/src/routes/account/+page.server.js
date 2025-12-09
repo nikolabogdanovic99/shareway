@@ -43,7 +43,8 @@ export const actions = {
         const profileData = {
             firstName: data.get('firstName'),
             lastName: data.get('lastName'),
-            profileImage: data.get('profileImage') || null
+            profileImage: data.get('profileImage') || null,
+            phoneNumber: data.get('phoneNumber') || null
         };
 
         try {
