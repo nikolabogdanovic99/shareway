@@ -28,6 +28,11 @@
   let editDescription = $state('');
   let editRouteRadiusKm = $state(5);
 
+  // Review editing
+  let editingReviewId = $state(null);
+  let editReviewRating = $state(5);
+  let editReviewComment = $state('');
+
   $effect(() => {
     ride = data.ride;
     driver = data.driver;
@@ -41,10 +46,26 @@
     if (form?.success && form?.action === 'updated') {
       isEditing = false;
     }
+    // Reset review edit mode
+    if (form?.success && (form?.action === 'reviewUpdated' || form?.action === 'reviewDeleted')) {
+      editingReviewId = null;
+    }
   });
 
   // Check if user is admin
   const isAdmin = $derived(user?.user_roles?.includes("admin"));
+
+  // Start editing a review
+  function startEditingReview(review) {
+    editingReviewId = review.id;
+    editReviewRating = review.rating;
+    editReviewComment = review.comment || '';
+  }
+
+  // Cancel editing review
+  function cancelEditingReview() {
+    editingReviewId = null;
+  }
 
   // Format date
   function formatDate(dateString) {
@@ -156,6 +177,14 @@
 
   {#if form?.success && form?.action === 'updated'}
     <div class="alert alert-success">Ride updated successfully!</div>
+  {/if}
+
+  {#if form?.success && form?.action === 'reviewUpdated'}
+    <div class="alert alert-success">Review updated successfully!</div>
+  {/if}
+
+  {#if form?.success && form?.action === 'reviewDeleted'}
+    <div class="alert alert-success">Review deleted successfully!</div>
   {/if}
 
   {#if form?.error}
@@ -417,15 +446,70 @@
             {:else}
               {#each reviews as review}
                 <div class="border-bottom pb-3 mb-3">
-                  <div class="d-flex justify-content-between">
-                    <strong>{getReviewerName(review.fromUserId)}</strong>
-                    <span class="text-warning">
-                      {#each Array(review.rating) as _}★{/each}
-                      {#each Array(5 - review.rating) as _}<span class="text-muted">★</span>{/each}
-                    </span>
-                  </div>
-                  <p class="mb-1">{review.comment}</p>
-                  <small class="text-muted">{formatDate(review.createdAt)}</small>
+                  {#if editingReviewId === review.id}
+                    <!-- Edit Mode -->
+                    <form method="POST" action="?/updateReview" use:enhance>
+                      <input type="hidden" name="reviewId" value={review.id} />
+                      <div class="mb-2">
+                        <label class="form-label">Rating</label>
+                        <div class="d-flex gap-2">
+                          {#each [1, 2, 3, 4, 5] as star}
+                            <button 
+                              type="button" 
+                              class="btn btn-sm btn-outline-warning"
+                              class:btn-warning={editReviewRating >= star}
+                              onclick={() => editReviewRating = star}
+                            >
+                              ★
+                            </button>
+                          {/each}
+                        </div>
+                        <input type="hidden" name="rating" value={editReviewRating} />
+                      </div>
+                      <div class="mb-2">
+                        <textarea 
+                          class="form-control" 
+                          name="comment" 
+                          rows="2"
+                          bind:value={editReviewComment}
+                        ></textarea>
+                      </div>
+                      <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick={cancelEditingReview}>Cancel</button>
+                      </div>
+                    </form>
+                  {:else}
+                    <!-- View Mode -->
+                    <div class="d-flex justify-content-between">
+                      <strong>{getReviewerName(review.fromUserId)}</strong>
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="text-warning">
+                          {#each Array(review.rating) as _}★{/each}
+                          {#each Array(5 - review.rating) as _}<span class="text-muted">★</span>{/each}
+                        </span>
+                        {#if review.fromUserId === currentUserEmail || isAdmin}
+                        <button class="btn btn-outline-primary btn-sm" onclick={() => startEditingReview(review)}>✏️</button>
+                        {/if}
+                        {#if review.fromUserId === currentUserEmail || isAdmin}
+                          <form method="POST" action="?/deleteReview" use:enhance class="d-inline">
+                            <input type="hidden" name="reviewId" value={review.id} />
+                            <button 
+                              type="submit" 
+                              class="btn btn-outline-danger btn-sm"
+                              onclick={(e) => {
+                                if (!confirm('Delete this review?')) {
+                                  e.preventDefault();
+                                }
+                              }}
+                            >🗑️</button>
+                          </form>
+                        {/if}
+                      </div>
+                    </div>
+                    <p class="mb-1">{review.comment}</p>
+                    <small class="text-muted">{formatDate(review.createdAt)}</small>
+                  {/if}
                 </div>
               {/each}
             {/if}

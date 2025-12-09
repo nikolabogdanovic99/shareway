@@ -9,29 +9,31 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 @Document("reviews")
 @NoArgsConstructor
 @RequiredArgsConstructor
 @Getter
+@Setter
 public class Review {
     @Id
     private String id;
     
     @NonNull
-    private String rideId; // Referenz zu Ride
+    private String rideId;
     
     @NonNull
-    private String fromUserId; // Wer bewertet (Rider oder Driver)
+    private String fromUserId;
     
     @NonNull
-    private String toUserId; // Wer wird bewertet (Rider oder Driver)
+    private String toUserId;
     
     @NonNull
-    private Integer rating; // Bewertung 1-5 Sterne
+    private Integer rating;
     
     @NonNull
-    private String comment; // Kommentar (später KI-moderiert!)
+    private String comment;
     
-    private LocalDateTime createdAt = LocalDateTime.now(); // Erstellungszeitpunkt
+    private LocalDateTime createdAt = LocalDateTime.now();
 }

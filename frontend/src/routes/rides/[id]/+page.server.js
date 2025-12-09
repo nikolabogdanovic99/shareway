@@ -187,8 +187,7 @@ export const actions = {
             console.log('Error completing ride:', err);
             return { success: false, error: 'Could not complete ride' };
         }
-    }
-    ,
+    },
 
     deleteRide: async ({ params, locals }) => {
         const jwt_token = locals.jwt_token;
@@ -212,8 +211,7 @@ export const actions = {
             }
             return { success: false, error: 'Could not delete ride' };
         }
-    }
-    ,
+    },
 
     updateRide: async ({ request, params, locals }) => {
         const jwt_token = locals.jwt_token;
@@ -249,27 +247,65 @@ export const actions = {
             }
             return { success: false, error: 'Could not update ride' };
         }
-    }
-    ,
+    },
 
-    cancelRide: async ({ params, locals }) => {
+    updateReview: async ({ request, locals }) => {
         const jwt_token = locals.jwt_token;
-        const rideId = params.id;
 
         if (!jwt_token) {
             throw error(401, 'Authentication required');
         }
 
+        const data = await request.formData();
+        const reviewId = data.get('reviewId');
+        const updateData = {
+            rating: parseInt(data.get('rating')),
+            comment: data.get('comment') || ''
+        };
+
         try {
             await axios({
                 method: "put",
-                url: `${API_BASE_URL}/api/service/me/cancelride?rideId=${rideId}`,
+                url: `${API_BASE_URL}/api/reviews/${reviewId}`,
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer " + jwt_token,
+                },
+                data: updateData,
+            });
+            return { success: true, action: 'reviewUpdated' };
+        } catch (err) {
+            console.log('Error updating review:', err);
+            if (err.response?.status === 403) {
+                return { success: false, error: 'You are not authorized to edit this review' };
+            }
+            return { success: false, error: 'Could not update review' };
+        }
+    },
+
+    deleteReview: async ({ request, locals }) => {
+        const jwt_token = locals.jwt_token;
+
+        if (!jwt_token) {
+            throw error(401, 'Authentication required');
+        }
+
+        const data = await request.formData();
+        const reviewId = data.get('reviewId');
+
+        try {
+            await axios({
+                method: "delete",
+                url: `${API_BASE_URL}/api/reviews/${reviewId}`,
                 headers: { Authorization: "Bearer " + jwt_token },
             });
-            return { success: true, action: 'canceled' };
+            return { success: true, action: 'reviewDeleted' };
         } catch (err) {
-            console.log('Error canceling ride:', err);
-            return { success: false, error: 'Could not cancel ride' };
+            console.log('Error deleting review:', err);
+            if (err.response?.status === 403) {
+                return { success: false, error: 'You are not authorized to delete this review' };
+            }
+            return { success: false, error: 'Could not delete review' };
         }
     }
 }

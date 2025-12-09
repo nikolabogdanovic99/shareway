@@ -6,9 +6,11 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -83,12 +85,11 @@ public class ReviewController {
 
         // Review erstellen (toUserId ist der Driver)
         Review review = new Review(
-            dto.getRideId(),
-            userEmail,
-            ride.getDriverId(),
-            dto.getRating(),
-            dto.getComment()
-        );
+                dto.getRideId(),
+                userEmail,
+                ride.getDriverId(),
+                dto.getRating(),
+                dto.getComment());
 
         Review savedReview = reviewRepository.save(review);
 
@@ -128,6 +129,68 @@ public class ReviewController {
     public ResponseEntity<List<Review>> getReviewsForUser(@PathVariable String userId) {
         List<Review> reviews = reviewRepository.findByToUserId(userId);
         return new ResponseEntity<>(reviews, HttpStatus.OK);
+    }
+
+    // PUT /api/reviews/{id} - Review bearbeiten (nur Owner)
+    @PutMapping("/reviews/{id}")
+    public ResponseEntity<Review> updateReview(@PathVariable String id, @RequestBody ReviewCreateDTO dto) {
+        String userEmail = userService.getEmail();
+
+        Optional<Review> optReview = reviewRepository.findById(id);
+        if (optReview.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        Review review = optReview.get();
+
+        // Nur Owner darf bearbeiten
+        boolean isAdmin = userService.userHasRole("admin");
+        if (!review.getFromUserId().equals(userEmail) && !isAdmin) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
+        // Validierung: Rating zwischen 1-5
+        if (dto.getRating() < 1 || dto.getRating() > 5) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        // Update fields
+        review.setRating(dto.getRating());
+        review.setComment(dto.getComment());
+
+        Review savedReview = reviewRepository.save(review);
+
+        // User Rating aktualisieren
+        updateUserRating(review.getToUserId());
+
+        return ResponseEntity.ok(savedReview);
+    }
+
+    // DELETE /api/reviews/{id} - Review löschen (Owner oder Admin)
+    @DeleteMapping("/reviews/{id}")
+    public ResponseEntity<String> deleteReview(@PathVariable String id) {
+        String userEmail = userService.getEmail();
+        boolean isAdmin = userService.userHasRole("admin");
+
+        Optional<Review> optReview = reviewRepository.findById(id);
+        if (optReview.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        Review review = optReview.get();
+
+        // Owner oder Admin darf löschen
+        if (!review.getFromUserId().equals(userEmail) && !isAdmin) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
+        String toUserId = review.getToUserId();
+        reviewRepository.deleteById(id);
+
+        // User Rating aktualisieren
+        updateUserRating(toUserId);
+
+        return ResponseEntity.ok("DELETED");
     }
 
     // Helper: User Rating aktualisieren
