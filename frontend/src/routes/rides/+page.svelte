@@ -18,6 +18,9 @@
   let filterMaxPrice = $state(data.filterMaxPrice || '');
   let filterDate = $state(data.filterDate || '');
 
+  // Sort state
+  let sortBy = $state('departure-asc');
+
   $effect(() => {
     rides = data.rides || [];
     users = data.users || [];
@@ -44,6 +47,12 @@
     return driver.name || "Unknown";
   }
 
+  function getDriverRating(driverId) {
+    if (!users || users.length === 0) return 0;
+    const driver = users.find((u) => u.email === driverId);
+    return driver?.rating || 0;
+  }
+
   function formatDate(dateString) {
     if (!dateString) return "-";
     const date = new Date(dateString);
@@ -67,6 +76,25 @@
       default: return 'bg-info';
     }
   }
+
+  // Sorted rides
+  const sortedRides = $derived(() => {
+    const sorted = [...rides];
+    switch (sortBy) {
+      case 'price-asc':
+        return sorted.sort((a, b) => a.pricePerSeat - b.pricePerSeat);
+      case 'price-desc':
+        return sorted.sort((a, b) => b.pricePerSeat - a.pricePerSeat);
+      case 'departure-asc':
+        return sorted.sort((a, b) => new Date(a.departureTime) - new Date(b.departureTime));
+      case 'departure-desc':
+        return sorted.sort((a, b) => new Date(b.departureTime) - new Date(a.departureTime));
+      case 'rating-desc':
+        return sorted.sort((a, b) => getDriverRating(b.driverId) - getDriverRating(a.driverId));
+      default:
+        return sorted;
+    }
+  });
 
   // Apply filters
   function applyFilters() {
@@ -170,13 +198,27 @@
     {/if}
   </div>
 {:else}
-  <p class="text-muted">
-    {#if hasActiveFilters}
-      Showing filtered results.
-    {:else}
-      Click on a ride to view details and book.
-    {/if}
-  </p>
+  <!-- Sort & Info Row -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <p class="text-muted mb-0">
+      {#if hasActiveFilters}
+        Showing filtered results.
+      {:else}
+        Click on a ride to view details and book.
+      {/if}
+    </p>
+    <div class="d-flex align-items-center gap-2">
+      <label class="form-label mb-0" for="sortBy">Sort by:</label>
+      <select class="form-select form-select-sm" style="width: auto;" id="sortBy" bind:value={sortBy}>
+        <option value="departure-asc">Departure (earliest)</option>
+        <option value="departure-desc">Departure (latest)</option>
+        <option value="price-asc">Price (lowest)</option>
+        <option value="price-desc">Price (highest)</option>
+        <option value="rating-desc">Driver Rating</option>
+      </select>
+    </div>
+  </div>
+
   <table class="table table-striped table-hover">
     <thead>
       <tr>
@@ -189,7 +231,7 @@
       </tr>
     </thead>
     <tbody>
-      {#each rides as ride}
+      {#each sortedRides() as ride}
         {@const myBooking = getMyBooking(ride.id)}
         <tr style="cursor: pointer;" onclick={() => (window.location.href = `/rides/${ride.id}`)}>
           <td>{ride.startLocation}</td>
@@ -200,6 +242,9 @@
               <span class="badge bg-secondary">Your Ride</span>
             {:else}
               {getDriverName(ride.driverId)}
+              {#if getDriverRating(ride.driverId) > 0}
+                <small class="text-warning ms-1">★ {getDriverRating(ride.driverId).toFixed(1)}</small>
+              {/if}
             {/if}
           </td>
           <td>CHF {ride.pricePerSeat}</td>
