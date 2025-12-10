@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { browser } from '$app/environment';
 
-  let { startLocation = '', endLocation = '' } = $props();
+  let { startLocation = '', endLocation = '', pickupLocations = [] } = $props();
 
   let mapContainer;
   let map;
@@ -33,11 +33,16 @@
     return null;
   }
 
-  // Get route between two points using OSRM (free)
-  async function getRoute(startCoords, endCoords) {
+  // Get route between multiple points using OSRM (free)
+  async function getRouteMultiple(waypoints) {
+    if (waypoints.length < 2) return null;
+    
     try {
+      // Build coordinates string: lng,lat;lng,lat;...
+      const coordsString = waypoints.map(p => `${p.lng},${p.lat}`).join(';');
+      
       const response = await fetch(
-        `https://router.project-osrm.org/route/v1/driving/${startCoords.lng},${startCoords.lat};${endCoords.lng},${endCoords.lat}?overview=full&geometries=geojson`
+        `https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`
       );
       const data = await response.json();
       if (data.routes && data.routes.length > 0) {
@@ -78,31 +83,59 @@
       iconAnchor: [15, 15]
     });
 
-    // Geocode locations and add markers
+    // Pickup icon (yellow)
+    const createPickupIcon = (index) => L.default.divIcon({
+      className: 'custom-marker',
+      html: `<div style="background-color: #ffc107; color: black; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); font-size: 12px;">${index + 1}</div>`,
+      iconSize: [26, 26],
+      iconAnchor: [13, 13]
+    });
+
+    // Geocode start and end
     const [startCoords, endCoords] = await Promise.all([
       geocode(startLocation + ', Switzerland'),
       geocode(endLocation + ', Switzerland')
     ]);
 
     const bounds = [];
+    const routeWaypoints = [];
 
+    // Add start marker
     if (startCoords) {
       L.default.marker([startCoords.lat, startCoords.lng], { icon: startIcon })
         .addTo(map)
         .bindPopup(`<strong>Start:</strong><br>${startLocation}`);
       bounds.push([startCoords.lat, startCoords.lng]);
+      routeWaypoints.push(startCoords);
     }
 
+    // Geocode and add pickup markers
+    if (pickupLocations && pickupLocations.length > 0) {
+      for (let i = 0; i < pickupLocations.length; i++) {
+        const pickup = pickupLocations[i];
+        const pickupCoords = await geocode(pickup.location + ', Switzerland');
+        if (pickupCoords) {
+          L.default.marker([pickupCoords.lat, pickupCoords.lng], { icon: createPickupIcon(i) })
+            .addTo(map)
+            .bindPopup(`<strong>Pickup ${i + 1}:</strong><br>${pickup.location}<br><small>${pickup.riderName || 'Rider'}</small>`);
+          bounds.push([pickupCoords.lat, pickupCoords.lng]);
+          routeWaypoints.push(pickupCoords);
+        }
+      }
+    }
+
+    // Add end marker
     if (endCoords) {
       L.default.marker([endCoords.lat, endCoords.lng], { icon: endIcon })
         .addTo(map)
         .bindPopup(`<strong>Destination:</strong><br>${endLocation}`);
       bounds.push([endCoords.lat, endCoords.lng]);
+      routeWaypoints.push(endCoords);
     }
 
-    // Get and draw route
-    if (startCoords && endCoords) {
-      const routeCoords = await getRoute(startCoords, endCoords);
+    // Get and draw route through all waypoints
+    if (routeWaypoints.length >= 2) {
+      const routeCoords = await getRouteMultiple(routeWaypoints);
       if (routeCoords) {
         // OSRM returns [lng, lat], Leaflet needs [lat, lng]
         const latLngs = routeCoords.map(coord => [coord[1], coord[0]]);
@@ -112,8 +145,9 @@
           opacity: 0.7
         }).addTo(map);
       } else {
-        // Fallback: straight line
-        L.default.polyline(bounds, {
+        // Fallback: straight lines through all points
+        const fallbackPoints = routeWaypoints.map(p => [p.lat, p.lng]);
+        L.default.polyline(fallbackPoints, {
           color: '#007bff',
           weight: 3,
           opacity: 0.5,

@@ -19,6 +19,7 @@ export async function load({ params, locals }) {
     let reviews = [];
     let myBooking = null;
     let users = [];
+    let approvedBookings = [];
 
     // Load ride
     try {
@@ -70,15 +71,43 @@ export async function load({ params, locals }) {
         console.log('Error loading reviews:', err);
     }
 
-    // Load my booking for this ride
+    // Load all bookings for this ride
+    const userEmail = user_info?.email || '';
     try {
         const bookingsResponse = await axios({
             method: "get",
             url: `${API_BASE_URL}/api/bookings`,
             headers: { Authorization: "Bearer " + jwt_token }
         });
-        const userEmail = user_info?.email || '';
-        myBooking = bookingsResponse.data.find(b => b.rideId === rideId && b.riderId === userEmail);
+        const allBookings = bookingsResponse.data;
+        
+        // Find my booking
+        myBooking = allBookings.find(b => b.rideId === rideId && b.riderId === userEmail);
+        
+        // Get approved bookings with pickup locations (for map)
+        const isDriver = ride.driverId === userEmail;
+        const isAdmin = user_info?.user_roles?.includes('admin');
+        
+        if (isDriver || isAdmin) {
+            // Driver/Admin sees all approved pickups
+            approvedBookings = allBookings
+                .filter(b => b.rideId === rideId && b.status === 'APPROVED' && b.pickupLocation)
+                .map(b => {
+                    const rider = users.find(u => u.email === b.riderId);
+                    return {
+                        location: b.pickupLocation,
+                        riderName: rider ? `${rider.firstName || ''} ${rider.lastName || ''}`.trim() : 'Rider',
+                        riderId: b.riderId
+                    };
+                });
+        } else if (myBooking && myBooking.status === 'APPROVED' && myBooking.pickupLocation) {
+            // Rider sees only their own pickup
+            approvedBookings = [{
+                location: myBooking.pickupLocation,
+                riderName: 'Your Pickup',
+                riderId: userEmail
+            }];
+        }
     } catch (err) {
         console.log('Error loading bookings:', err);
     }
@@ -90,7 +119,8 @@ export async function load({ params, locals }) {
         reviews,
         myBooking,
         users,
-        currentUserEmail: user_info?.email || '',
+        approvedBookings,
+        currentUserEmail: userEmail,
         user: user_info
     };
 }
@@ -134,29 +164,6 @@ export const actions = {
         } catch (err) {
             console.log('Error booking ride:', err);
             return { success: false, error: 'Could not book ride' };
-        }
-    },
-
-    validatePromoCode: async ({ request, locals }) => {
-        const jwt_token = locals.jwt_token;
-
-        if (!jwt_token) {
-            return { success: false, error: 'Authentication required' };
-        }
-
-        const data = await request.formData();
-        const code = data.get('code') || '';
-        const price = parseFloat(data.get('price')) || 0;
-
-        try {
-            const response = await axios({
-                method: "get",
-                url: `${API_BASE_URL}/api/service/discount/validate?code=${code}&price=${price}`,
-                headers: { Authorization: "Bearer " + jwt_token },
-            });
-            return { success: true, discount: response.data };
-        } catch (err) {
-            return { success: false, error: 'Invalid promo code' };
         }
     },
 

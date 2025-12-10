@@ -3,7 +3,7 @@
   import { goto } from "$app/navigation";
   import LocationAutocomplete from "$lib/components/LocationAutocomplete.svelte";
   import Map from "$lib/components/Map.svelte";
-  
+
   let { data, form } = $props();
 
   let ride = $state(data.ride);
@@ -16,28 +16,30 @@
   let user = $state(data.user);
 
   let selectedRating = $state(5);
-  
+
   // Booking form states
-  let pickupLocation = $state('');
-  let bookingMessage = $state('');
+  let pickupLocation = $state("");
+  let bookingMessage = $state("");
 
   // Edit mode
   let isEditing = $state(false);
-  let editDepartureTime = $state('');
+  let editDepartureTime = $state("");
   let editPricePerSeat = $state(0);
-  let editDescription = $state('');
+  let editDescription = $state("");
   let editRouteRadiusKm = $state(5);
 
   // Review editing
   let editingReviewId = $state(null);
   let editReviewRating = $state(5);
-  let editReviewComment = $state('');
+  let editReviewComment = $state("");
 
   // Promo Code states
-  let promoCode = $state('');
+  let promoCode = $state("");
   let promoDiscount = $state(null);
-  let promoError = $state('');
+  let promoError = $state("");
   let isValidatingPromo = $state(false);
+
+  let approvedBookings = $state(data.approvedBookings || []);
 
   $effect(() => {
     ride = data.ride;
@@ -47,13 +49,17 @@
     myBooking = data.myBooking;
     currentUserEmail = data.currentUserEmail;
     user = data.user;
-    
+    approvedBookings = data.approvedBookings || [];
+
     // Reset edit mode on successful update
-    if (form?.success && form?.action === 'updated') {
+    if (form?.success && form?.action === "updated") {
       isEditing = false;
     }
     // Reset review edit mode
-    if (form?.success && (form?.action === 'reviewUpdated' || form?.action === 'reviewDeleted')) {
+    if (
+      form?.success &&
+      (form?.action === "reviewUpdated" || form?.action === "reviewDeleted")
+    ) {
       editingReviewId = null;
     }
   });
@@ -65,7 +71,7 @@
   function startEditingReview(review) {
     editingReviewId = review.id;
     editReviewRating = review.rating;
-    editReviewComment = review.comment || '';
+    editReviewComment = review.comment || "";
   }
 
   // Cancel editing review
@@ -78,34 +84,34 @@
   function validatePromoCode() {
     if (!promoCode) {
       promoDiscount = null;
-      promoError = '';
+      promoError = "";
       return;
     }
-    
+
     const code = promoCode.toUpperCase();
     const promoCodes = {
-      'WELCOME10': 10,
-      'SHARE20': 20,
-      'SUMMER15': 15
+      WELCOME10: 10,
+      SHARE20: 20,
+      SUMMER15: 15,
     };
-    
+
     if (promoCodes[code]) {
       const percent = promoCodes[code];
-      const discountAmount = ride.pricePerSeat * percent / 100;
+      const discountAmount = (ride.pricePerSeat * percent) / 100;
       const finalPrice = ride.pricePerSeat - discountAmount;
-      
+
       promoDiscount = {
         valid: true,
         code: code,
         discountPercent: percent,
         discountAmount: discountAmount,
         originalPrice: ride.pricePerSeat,
-        finalPrice: finalPrice
+        finalPrice: finalPrice,
       };
-      promoError = '';
+      promoError = "";
     } else {
       promoDiscount = null;
-      promoError = 'Invalid promo code';
+      promoError = "Invalid promo code";
     }
   }
 
@@ -113,7 +119,11 @@
   function formatDate(dateString) {
     if (!dateString) return "-";
     const date = new Date(dateString);
-    return date.toLocaleDateString("de-CH") + " " + date.toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
+    return (
+      date.toLocaleDateString("de-CH") +
+      " " +
+      date.toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" })
+    );
   }
 
   // Format duration
@@ -128,41 +138,41 @@
 
   // Get reviewer name
   function getReviewerName(fromUserId) {
-    const user = users.find(u => u.email === fromUserId);
-    return user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.name : 'Anonymous';
+    const user = users.find((u) => u.email === fromUserId);
+    return user
+      ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.name
+      : "Anonymous";
   }
 
   // Check if user can review
   const canReview = $derived(
-    ride?.status === 'COMPLETED' &&
-    myBooking?.status === 'APPROVED' &&
-    !reviews.some(r => r.fromUserId === currentUserEmail)
+    ride?.status === "COMPLETED" &&
+      myBooking?.status === "APPROVED" &&
+      !reviews.some((r) => r.fromUserId === currentUserEmail),
   );
 
   // Check if user already reviewed
   const hasReviewed = $derived(
-    reviews.some(r => r.fromUserId === currentUserEmail)
+    reviews.some((r) => r.fromUserId === currentUserEmail),
   );
 
   // Check if this is user's own ride
-  const isMyRide = $derived(
-    currentUserEmail === ride?.driverId
-  );
+  const isMyRide = $derived(currentUserEmail === ride?.driverId);
 
   // Check if ride can be completed
   const canCompleteRide = $derived(
-    isMyRide && (ride?.status === 'OPEN' || ride?.status === 'IN_PROGRESS')
+    isMyRide && (ride?.status === "OPEN" || ride?.status === "IN_PROGRESS"),
   );
 
   // Check if ride can be deleted (Admin OR own ride that's not completed)
   const canDeleteRide = $derived(
-    isAdmin || (isMyRide && ride?.status !== 'COMPLETED')
+    isAdmin || (isMyRide && ride?.status !== "COMPLETED"),
   );
 
   // Check if ride can be edited
   const canEditRide = $derived(
-    (isAdmin && ride?.status !== 'COMPLETED') || 
-    (isMyRide && ride?.status === 'OPEN')
+    (isAdmin && ride?.status !== "COMPLETED") ||
+      (isMyRide && ride?.status === "OPEN"),
   );
 
   // Start editing
@@ -171,7 +181,7 @@
     const formatted = dt.toISOString().slice(0, 16);
     editDepartureTime = formatted;
     editPricePerSeat = ride.pricePerSeat;
-    editDescription = ride.description || '';
+    editDescription = ride.description || "";
     editRouteRadiusKm = ride.routeRadiusKm || 5;
     isEditing = true;
   }
@@ -184,8 +194,8 @@
   // Handle delete with confirmation and redirect
   function handleDelete() {
     return async ({ result }) => {
-      if (result.type === 'success' && result.data?.action === 'deleted') {
-        goto('/rides');
+      if (result.type === "success" && result.data?.action === "deleted") {
+        goto("/rides");
       }
     };
   }
@@ -193,39 +203,50 @@
   // Status badge class
   function getStatusClass(status) {
     switch (status) {
-      case 'OPEN': return 'bg-success';
-      case 'FULL': return 'bg-warning text-dark';
-      case 'IN_PROGRESS': return 'bg-primary';
-      case 'COMPLETED': return 'bg-secondary';
-      default: return 'bg-secondary';
+      case "OPEN":
+        return "bg-success";
+      case "FULL":
+        return "bg-warning text-dark";
+      case "IN_PROGRESS":
+        return "bg-primary";
+      case "COMPLETED":
+        return "bg-secondary";
+      default:
+        return "bg-secondary";
     }
   }
 </script>
 
 <div class="mt-3">
-  <a href="/rides" class="btn btn-outline-secondary btn-sm mb-3">← Back to Rides</a>
+  <a href="/rides" class="btn btn-outline-secondary btn-sm mb-3"
+    >← Back to Rides</a
+  >
 
-  {#if form?.success && form?.action === 'booked'}
-    <div class="alert alert-success">Ride booked successfully! The driver will review your request.</div>
+  {#if form?.success && form?.action === "booked"}
+    <div class="alert alert-success">
+      Ride booked successfully! The driver will review your request.
+    </div>
   {/if}
 
-  {#if form?.success && form?.action === 'reviewed'}
+  {#if form?.success && form?.action === "reviewed"}
     <div class="alert alert-success">Review submitted successfully!</div>
   {/if}
 
-  {#if form?.success && form?.action === 'completed'}
-    <div class="alert alert-success">Ride completed successfully! Riders can now leave reviews.</div>
+  {#if form?.success && form?.action === "completed"}
+    <div class="alert alert-success">
+      Ride completed successfully! Riders can now leave reviews.
+    </div>
   {/if}
 
-  {#if form?.success && form?.action === 'updated'}
+  {#if form?.success && form?.action === "updated"}
     <div class="alert alert-success">Ride updated successfully!</div>
   {/if}
 
-  {#if form?.success && form?.action === 'reviewUpdated'}
+  {#if form?.success && form?.action === "reviewUpdated"}
     <div class="alert alert-success">Review updated successfully!</div>
   {/if}
 
-  {#if form?.success && form?.action === 'reviewDeleted'}
+  {#if form?.success && form?.action === "reviewDeleted"}
     <div class="alert alert-success">Review deleted successfully!</div>
   {/if}
 
@@ -238,22 +259,37 @@
       <!-- Ride Info -->
       <div class="col-md-8">
         <div class="card mb-4">
-          <div class="card-header d-flex justify-content-between align-items-center">
+          <div
+            class="card-header d-flex justify-content-between align-items-center"
+          >
             <h4 class="mb-0">{ride.startLocation} → {ride.endLocation}</h4>
             <div class="d-flex align-items-center gap-2">
-              <span class="badge {getStatusClass(ride.status)}">{ride.status}</span>
+              <span class="badge {getStatusClass(ride.status)}"
+                >{ride.status}</span
+              >
               {#if canEditRide && !isEditing}
-                <button class="btn btn-outline-primary btn-sm" onclick={startEditing}>
+                <button
+                  class="btn btn-outline-primary btn-sm"
+                  onclick={startEditing}
+                >
                   ✏️ Edit
                 </button>
               {/if}
               {#if canDeleteRide}
-                <form method="POST" action="?/deleteRide" use:enhance={handleDelete}>
-                  <button 
-                    type="submit" 
+                <form
+                  method="POST"
+                  action="?/deleteRide"
+                  use:enhance={handleDelete}
+                >
+                  <button
+                    type="submit"
                     class="btn btn-danger btn-sm"
                     onclick={(e) => {
-                      if (!confirm('Delete this ride? All bookings will be removed.')) {
+                      if (
+                        !confirm(
+                          "Delete this ride? All bookings will be removed.",
+                        )
+                      ) {
                         e.preventDefault();
                       }
                     }}
@@ -267,10 +303,17 @@
           <div class="card-body">
             <!-- 🗺️ MAP -->
             <div class="mb-4">
-              <Map startLocation={ride.startLocation} endLocation={ride.endLocation} />
+              <Map
+                startLocation={ride.startLocation}
+                endLocation={ride.endLocation}
+                pickupLocations={approvedBookings}
+              />
               <div class="d-flex justify-content-between mt-2">
-                <small class="text-success">● Start: {ride.startLocation}</small>
-                <small class="text-danger">● Destination: {ride.endLocation}</small>
+                <small class="text-success">● Start: {ride.startLocation}</small
+                >
+                <small class="text-danger"
+                  >● Destination: {ride.endLocation}</small
+                >
               </div>
             </div>
 
@@ -281,20 +324,24 @@
               <form method="POST" action="?/updateRide" use:enhance>
                 <div class="row mb-3">
                   <div class="col-md-6">
-                    <label class="form-label" for="editDepartureTime">Departure Time</label>
-                    <input 
-                      type="datetime-local" 
-                      class="form-control" 
+                    <label class="form-label" for="editDepartureTime"
+                      >Departure Time</label
+                    >
+                    <input
+                      type="datetime-local"
+                      class="form-control"
                       id="editDepartureTime"
                       name="departureTime"
                       bind:value={editDepartureTime}
                     />
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label" for="editPricePerSeat">Price per Seat (CHF)</label>
-                    <input 
-                      type="number" 
-                      class="form-control" 
+                    <label class="form-label" for="editPricePerSeat"
+                      >Price per Seat (CHF)</label
+                    >
+                    <input
+                      type="number"
+                      class="form-control"
                       id="editPricePerSeat"
                       name="pricePerSeat"
                       min="0"
@@ -304,10 +351,12 @@
                   </div>
                 </div>
                 <div class="mb-3">
-                  <label class="form-label" for="editRouteRadiusKm">Max. Pickup Detour (km)</label>
-                  <input 
-                    type="number" 
-                    class="form-control" 
+                  <label class="form-label" for="editRouteRadiusKm"
+                    >Max. Pickup Detour (km)</label
+                  >
+                  <input
+                    type="number"
+                    class="form-control"
                     id="editRouteRadiusKm"
                     name="routeRadiusKm"
                     min="1"
@@ -316,9 +365,11 @@
                   />
                 </div>
                 <div class="mb-3">
-                  <label class="form-label" for="editDescription">Description</label>
-                  <textarea 
-                    class="form-control" 
+                  <label class="form-label" for="editDescription"
+                    >Description</label
+                  >
+                  <textarea
+                    class="form-control"
                     id="editDescription"
                     name="description"
                     rows="3"
@@ -326,27 +377,47 @@
                   ></textarea>
                 </div>
                 <div class="d-flex gap-2">
-                  <button type="submit" class="btn btn-primary">Save Changes</button>
-                  <button type="button" class="btn btn-secondary" onclick={cancelEditing}>Cancel</button>
+                  <button type="submit" class="btn btn-primary"
+                    >Save Changes</button
+                  >
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    onclick={cancelEditing}>Cancel</button
+                  >
                 </div>
               </form>
             {:else}
               <!-- View Mode -->
               <div class="row">
                 <div class="col-md-6">
-                  <p><strong>Departure:</strong> {formatDate(ride.departureTime)}</p>
-                  <p><strong>Price per Seat:</strong> CHF {ride.pricePerSeat}</p>
-                  <p><strong>Available Seats:</strong> {ride.seatsFree} / {ride.seatsTotal}</p>
+                  <p>
+                    <strong>Departure:</strong>
+                    {formatDate(ride.departureTime)}
+                  </p>
+                  <p>
+                    <strong>Price per Seat:</strong> CHF {ride.pricePerSeat}
+                  </p>
+                  <p>
+                    <strong>Available Seats:</strong>
+                    {ride.seatsFree} / {ride.seatsTotal}
+                  </p>
                 </div>
                 <div class="col-md-6">
                   {#if ride.durationMinutes}
-                    <p><strong>Duration:</strong> {formatDuration(ride.durationMinutes)}</p>
+                    <p>
+                      <strong>Duration:</strong>
+                      {formatDuration(ride.durationMinutes)}
+                    </p>
                   {/if}
                   {#if ride.distanceKm}
                     <p><strong>Distance:</strong> {ride.distanceKm} km</p>
                   {/if}
                   {#if ride.routeRadiusKm}
-                    <p><strong>Max. Pickup Detour:</strong> {ride.routeRadiusKm} km</p>
+                    <p>
+                      <strong>Max. Pickup Detour:</strong>
+                      {ride.routeRadiusKm} km
+                    </p>
                   {/if}
                 </div>
               </div>
@@ -362,74 +433,95 @@
             <!-- Actions -->
             {#if isMyRide}
               {#if canCompleteRide}
-                <form method="POST" action="?/completeRide" use:enhance class="mb-2">
-                  <button type="submit" class="btn btn-success">Complete Ride</button>
+                <form
+                  method="POST"
+                  action="?/completeRide"
+                  use:enhance
+                  class="mb-2"
+                >
+                  <button type="submit" class="btn btn-success"
+                    >Complete Ride</button
+                  >
                 </form>
               {/if}
               <span class="badge bg-secondary">Your Ride</span>
             {:else if myBooking}
               <div class="alert alert-info mb-0">
-                <strong>Your Booking:</strong> <span class="badge bg-info">{myBooking.status}</span>
+                <strong>Your Booking:</strong>
+                <span class="badge bg-info">{myBooking.status}</span>
                 {#if myBooking.pickupLocation}
-                  <br><small>📍 Pickup: {myBooking.pickupLocation}</small>
+                  <br /><small>📍 Pickup: {myBooking.pickupLocation}</small>
                 {/if}
               </div>
-            {:else if ride.status === 'OPEN' && ride.seatsFree > 0}
+            {:else if ride.status === "OPEN" && ride.seatsFree > 0}
               <!-- Booking Form with Pickup Location and Promo Code -->
               <div class="card bg-light">
                 <div class="card-body">
                   <h6 class="card-title mb-3">Book this Ride</h6>
                   <form method="POST" action="?/bookRide" use:enhance>
-                    <input type="hidden" name="pickupLocation" value={pickupLocation} />
-                    <input type="hidden" name="message" value={bookingMessage} />
+                    <input
+                      type="hidden"
+                      name="pickupLocation"
+                      value={pickupLocation}
+                    />
+                    <input
+                      type="hidden"
+                      name="message"
+                      value={bookingMessage}
+                    />
                     <input type="hidden" name="promoCode" value={promoCode} />
-                    
+
                     <div class="mb-3">
                       <label class="form-label" for="pickupLocation">
                         📍 Pickup Location *
                       </label>
-                      <LocationAutocomplete 
-                        id="pickupLocation" 
-                        placeholder="Where should the driver pick you up?" 
+                      <LocationAutocomplete
+                        id="pickupLocation"
+                        placeholder="Where should the driver pick you up?"
                         bind:value={pickupLocation}
                         required={true}
                       />
-                      <small class="text-muted">Select a location from the suggestions</small>
+                      <small class="text-muted"
+                        >Select a location from the suggestions</small
+                      >
                     </div>
                     <div class="mb-3">
                       <label class="form-label" for="bookingMessage">
                         💬 Message to Driver (optional)
                       </label>
-                      <input 
-                        class="form-control" 
-                        id="bookingMessage" 
-                        type="text" 
+                      <input
+                        class="form-control"
+                        id="bookingMessage"
+                        type="text"
                         placeholder="e.g. I have a small suitcase, I'll be wearing a red jacket"
                         bind:value={bookingMessage}
                       />
                     </div>
-                    
+
                     <!-- Promo Code -->
                     <div class="mb-3">
                       <label class="form-label" for="promoCode">
                         🏷️ Promo Code (optional)
                       </label>
                       <div class="input-group">
-                        <input 
-                          class="form-control" 
-                          id="promoCode" 
-                          type="text" 
+                        <input
+                          class="form-control"
+                          id="promoCode"
+                          type="text"
                           placeholder="e.g. WELCOME10"
                           bind:value={promoCode}
-                          oninput={() => { promoDiscount = null; promoError = ''; }}
+                          oninput={() => {
+                            promoDiscount = null;
+                            promoError = "";
+                          }}
                         />
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           class="btn btn-outline-secondary"
                           onclick={validatePromoCode}
                           disabled={isValidatingPromo || !promoCode}
                         >
-                          {isValidatingPromo ? '...' : 'Apply'}
+                          {isValidatingPromo ? "..." : "Apply"}
                         </button>
                       </div>
                       {#if promoError}
@@ -437,7 +529,9 @@
                       {/if}
                       {#if promoDiscount}
                         <small class="text-success">
-                          ✅ {promoDiscount.discountPercent}% off! You save CHF {promoDiscount.discountAmount.toFixed(2)}
+                          ✅ {promoDiscount.discountPercent}% off! You save CHF {promoDiscount.discountAmount.toFixed(
+                            2,
+                          )}
                         </small>
                       {/if}
                     </div>
@@ -446,33 +540,51 @@
                     <div class="mb-3 p-2 bg-white rounded">
                       <div class="d-flex justify-content-between">
                         <span>Price per Seat:</span>
-                        <span class:text-decoration-line-through={promoDiscount}>CHF {ride.pricePerSeat}</span>
+                        <span class:text-decoration-line-through={promoDiscount}
+                          >CHF {ride.pricePerSeat}</span
+                        >
                       </div>
                       {#if promoDiscount}
-                        <div class="d-flex justify-content-between text-success">
-                          <span>Discount ({promoDiscount.discountPercent}%):</span>
-                          <span>-CHF {promoDiscount.discountAmount.toFixed(2)}</span>
+                        <div
+                          class="d-flex justify-content-between text-success"
+                        >
+                          <span
+                            >Discount ({promoDiscount.discountPercent}%):</span
+                          >
+                          <span
+                            >-CHF {promoDiscount.discountAmount.toFixed(
+                              2,
+                            )}</span
+                          >
                         </div>
                         <hr class="my-1" />
                         <div class="d-flex justify-content-between fw-bold">
                           <span>Final Price:</span>
-                          <span class="text-success">CHF {promoDiscount.finalPrice.toFixed(2)}</span>
+                          <span class="text-success"
+                            >CHF {promoDiscount.finalPrice.toFixed(2)}</span
+                          >
                         </div>
                       {/if}
                     </div>
 
-                    <button type="submit" class="btn btn-primary" disabled={!pickupLocation}>
+                    <button
+                      type="submit"
+                      class="btn btn-primary"
+                      disabled={!pickupLocation}
+                    >
                       Request Booking
                     </button>
                     {#if !pickupLocation}
-                      <small class="text-muted ms-2">Please select a pickup location</small>
+                      <small class="text-muted ms-2"
+                        >Please select a pickup location</small
+                      >
                     {/if}
                   </form>
                 </div>
               </div>
-            {:else if ride.status === 'FULL'}
+            {:else if ride.status === "FULL"}
               <span class="badge bg-warning text-dark">Ride is full</span>
-            {:else if ride.status === 'COMPLETED'}
+            {:else if ride.status === "COMPLETED"}
               <span class="badge bg-secondary">Ride completed</span>
             {/if}
           </div>
@@ -487,9 +599,15 @@
             <div class="card-body">
               <p><strong>{vehicle.make} {vehicle.model}</strong></p>
               <p>
-                {#if vehicle.color}<span class="badge bg-light text-dark me-2">{vehicle.color}</span>{/if}
-                {#if vehicle.year}<span class="badge bg-light text-dark me-2">{vehicle.year}</span>{/if}
-                <span class="badge bg-light text-dark">{vehicle.seats} seats</span>
+                {#if vehicle.color}<span class="badge bg-light text-dark me-2"
+                    >{vehicle.color}</span
+                  >{/if}
+                {#if vehicle.year}<span class="badge bg-light text-dark me-2"
+                    >{vehicle.year}</span
+                  >{/if}
+                <span class="badge bg-light text-dark"
+                  >{vehicle.seats} seats</span
+                >
               </p>
               {#if vehicle.plateHash}
                 <p><strong>License Plate:</strong> {vehicle.plateHash}</p>
@@ -505,17 +623,22 @@
           </div>
           <div class="card-body">
             {#if canReview}
-              <form method="POST" action="?/submitReview" use:enhance class="mb-4">
+              <form
+                method="POST"
+                action="?/submitReview"
+                use:enhance
+                class="mb-4"
+              >
                 <h6>Write a Review</h6>
                 <div class="mb-3">
                   <label class="form-label">Rating</label>
                   <div class="d-flex gap-2">
                     {#each [1, 2, 3, 4, 5] as star}
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         class="btn btn-outline-warning"
                         class:btn-warning={selectedRating >= star}
-                        onclick={() => selectedRating = star}
+                        onclick={() => (selectedRating = star)}
                       >
                         ★
                       </button>
@@ -525,15 +648,25 @@
                 </div>
                 <div class="mb-3">
                   <label class="form-label" for="comment">Comment</label>
-                  <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="Share your experience..."></textarea>
+                  <textarea
+                    class="form-control"
+                    id="comment"
+                    name="comment"
+                    rows="3"
+                    placeholder="Share your experience..."
+                  ></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">Submit Review</button>
+                <button type="submit" class="btn btn-primary"
+                  >Submit Review</button
+                >
               </form>
               <hr />
             {/if}
 
             {#if hasReviewed}
-              <div class="alert alert-info">You have already reviewed this ride.</div>
+              <div class="alert alert-info">
+                You have already reviewed this ride.
+              </div>
             {/if}
 
             {#if reviews.length === 0}
@@ -549,29 +682,39 @@
                         <label class="form-label">Rating</label>
                         <div class="d-flex gap-2">
                           {#each [1, 2, 3, 4, 5] as star}
-                            <button 
-                              type="button" 
+                            <button
+                              type="button"
                               class="btn btn-sm btn-outline-warning"
                               class:btn-warning={editReviewRating >= star}
-                              onclick={() => editReviewRating = star}
+                              onclick={() => (editReviewRating = star)}
                             >
                               ★
                             </button>
                           {/each}
                         </div>
-                        <input type="hidden" name="rating" value={editReviewRating} />
+                        <input
+                          type="hidden"
+                          name="rating"
+                          value={editReviewRating}
+                        />
                       </div>
                       <div class="mb-2">
-                        <textarea 
-                          class="form-control" 
-                          name="comment" 
+                        <textarea
+                          class="form-control"
+                          name="comment"
                           rows="2"
                           bind:value={editReviewComment}
                         ></textarea>
                       </div>
                       <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary btn-sm">Save</button>
-                        <button type="button" class="btn btn-secondary btn-sm" onclick={cancelEditingReview}>Cancel</button>
+                        <button type="submit" class="btn btn-primary btn-sm"
+                          >Save</button
+                        >
+                        <button
+                          type="button"
+                          class="btn btn-secondary btn-sm"
+                          onclick={cancelEditingReview}>Cancel</button
+                        >
                       </div>
                     </form>
                   {:else}
@@ -581,29 +724,46 @@
                       <div class="d-flex align-items-center gap-2">
                         <span class="text-warning">
                           {#each Array(review.rating) as _}★{/each}
-                          {#each Array(5 - review.rating) as _}<span class="text-muted">★</span>{/each}
+                          {#each Array(5 - review.rating) as _}<span
+                              class="text-muted">★</span
+                            >{/each}
                         </span>
                         {#if review.fromUserId === currentUserEmail || isAdmin}
-                          <button class="btn btn-outline-primary btn-sm" onclick={() => startEditingReview(review)}>✏️</button>
+                          <button
+                            class="btn btn-outline-primary btn-sm"
+                            onclick={() => startEditingReview(review)}
+                            >✏️</button
+                          >
                         {/if}
                         {#if review.fromUserId === currentUserEmail || isAdmin}
-                          <form method="POST" action="?/deleteReview" use:enhance class="d-inline">
-                            <input type="hidden" name="reviewId" value={review.id} />
-                            <button 
-                              type="submit" 
+                          <form
+                            method="POST"
+                            action="?/deleteReview"
+                            use:enhance
+                            class="d-inline"
+                          >
+                            <input
+                              type="hidden"
+                              name="reviewId"
+                              value={review.id}
+                            />
+                            <button
+                              type="submit"
                               class="btn btn-outline-danger btn-sm"
                               onclick={(e) => {
-                                if (!confirm('Delete this review?')) {
+                                if (!confirm("Delete this review?")) {
                                   e.preventDefault();
                                 }
-                              }}
-                            >🗑️</button>
+                              }}>🗑️</button
+                            >
                           </form>
                         {/if}
                       </div>
                     </div>
                     <p class="mb-1">{review.comment}</p>
-                    <small class="text-muted">{formatDate(review.createdAt)}</small>
+                    <small class="text-muted"
+                      >{formatDate(review.createdAt)}</small
+                    >
                   {/if}
                 </div>
               {/each}
@@ -620,19 +780,34 @@
           </div>
           <div class="card-body text-center">
             {#if driver?.profileImage}
-              <img src={driver.profileImage} alt="Driver" class="rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;" />
+              <img
+                src={driver.profileImage}
+                alt="Driver"
+                class="rounded-circle mb-3"
+                style="width: 100px; height: 100px; object-fit: cover;"
+              />
             {:else}
-              <div class="bg-secondary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
-                <span class="text-white fs-4">{driver?.firstName?.charAt(0) || '?'}{driver?.lastName?.charAt(0) || ''}</span>
+              <div
+                class="bg-secondary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                style="width: 100px; height: 100px;"
+              >
+                <span class="text-white fs-4"
+                  >{driver?.firstName?.charAt(0) ||
+                    "?"}{driver?.lastName?.charAt(0) || ""}</span
+                >
               </div>
             {/if}
-            <h5>{driver?.firstName || ''} {driver?.lastName || ''}</h5>
+            <h5>{driver?.firstName || ""} {driver?.lastName || ""}</h5>
             {#if driver?.rating > 0}
               <p class="text-warning mb-1">
                 {#each Array(Math.round(driver.rating)) as _}★{/each}
-                {#each Array(5 - Math.round(driver.rating)) as _}<span class="text-muted">★</span>{/each}
+                {#each Array(5 - Math.round(driver.rating)) as _}<span
+                    class="text-muted">★</span
+                  >{/each}
               </p>
-              <p class="text-muted">{driver.rating.toFixed(1)} ({driver.reviewCount} reviews)</p>
+              <p class="text-muted">
+                {driver.rating.toFixed(1)} ({driver.reviewCount} reviews)
+              </p>
             {:else}
               <p class="text-muted">No ratings yet</p>
             {/if}
