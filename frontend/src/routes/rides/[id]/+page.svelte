@@ -33,6 +33,12 @@
   let editReviewRating = $state(5);
   let editReviewComment = $state('');
 
+  // Promo Code states
+  let promoCode = $state('');
+  let promoDiscount = $state(null);
+  let promoError = $state('');
+  let isValidatingPromo = $state(false);
+
   $effect(() => {
     ride = data.ride;
     driver = data.driver;
@@ -65,6 +71,42 @@
   // Cancel editing review
   function cancelEditingReview() {
     editingReviewId = null;
+  }
+
+  // Validate promo code
+  // Validate promo code (client-side)
+  function validatePromoCode() {
+    if (!promoCode) {
+      promoDiscount = null;
+      promoError = '';
+      return;
+    }
+    
+    const code = promoCode.toUpperCase();
+    const promoCodes = {
+      'WELCOME10': 10,
+      'SHARE20': 20,
+      'SUMMER15': 15
+    };
+    
+    if (promoCodes[code]) {
+      const percent = promoCodes[code];
+      const discountAmount = ride.pricePerSeat * percent / 100;
+      const finalPrice = ride.pricePerSeat - discountAmount;
+      
+      promoDiscount = {
+        valid: true,
+        code: code,
+        discountPercent: percent,
+        discountAmount: discountAmount,
+        originalPrice: ride.pricePerSeat,
+        finalPrice: finalPrice
+      };
+      promoError = '';
+    } else {
+      promoDiscount = null;
+      promoError = 'Invalid promo code';
+    }
   }
 
   // Format date
@@ -333,14 +375,14 @@
                 {/if}
               </div>
             {:else if ride.status === 'OPEN' && ride.seatsFree > 0}
-              <!-- Booking Form with Pickup Location -->
+              <!-- Booking Form with Pickup Location and Promo Code -->
               <div class="card bg-light">
                 <div class="card-body">
                   <h6 class="card-title mb-3">Book this Ride</h6>
                   <form method="POST" action="?/bookRide" use:enhance>
-                    <!-- Hidden inputs für Form-Daten -->
                     <input type="hidden" name="pickupLocation" value={pickupLocation} />
                     <input type="hidden" name="message" value={bookingMessage} />
+                    <input type="hidden" name="promoCode" value={promoCode} />
                     
                     <div class="mb-3">
                       <label class="form-label" for="pickupLocation">
@@ -366,6 +408,59 @@
                         bind:value={bookingMessage}
                       />
                     </div>
+                    
+                    <!-- Promo Code -->
+                    <div class="mb-3">
+                      <label class="form-label" for="promoCode">
+                        🏷️ Promo Code (optional)
+                      </label>
+                      <div class="input-group">
+                        <input 
+                          class="form-control" 
+                          id="promoCode" 
+                          type="text" 
+                          placeholder="e.g. WELCOME10"
+                          bind:value={promoCode}
+                          oninput={() => { promoDiscount = null; promoError = ''; }}
+                        />
+                        <button 
+                          type="button" 
+                          class="btn btn-outline-secondary"
+                          onclick={validatePromoCode}
+                          disabled={isValidatingPromo || !promoCode}
+                        >
+                          {isValidatingPromo ? '...' : 'Apply'}
+                        </button>
+                      </div>
+                      {#if promoError}
+                        <small class="text-danger">{promoError}</small>
+                      {/if}
+                      {#if promoDiscount}
+                        <small class="text-success">
+                          ✅ {promoDiscount.discountPercent}% off! You save CHF {promoDiscount.discountAmount.toFixed(2)}
+                        </small>
+                      {/if}
+                    </div>
+
+                    <!-- Price Summary -->
+                    <div class="mb-3 p-2 bg-white rounded">
+                      <div class="d-flex justify-content-between">
+                        <span>Price per Seat:</span>
+                        <span class:text-decoration-line-through={promoDiscount}>CHF {ride.pricePerSeat}</span>
+                      </div>
+                      {#if promoDiscount}
+                        <div class="d-flex justify-content-between text-success">
+                          <span>Discount ({promoDiscount.discountPercent}%):</span>
+                          <span>-CHF {promoDiscount.discountAmount.toFixed(2)}</span>
+                        </div>
+                        <hr class="my-1" />
+                        <div class="d-flex justify-content-between fw-bold">
+                          <span>Final Price:</span>
+                          <span class="text-success">CHF {promoDiscount.finalPrice.toFixed(2)}</span>
+                        </div>
+                      {/if}
+                    </div>
+
                     <button type="submit" class="btn btn-primary" disabled={!pickupLocation}>
                       Request Booking
                     </button>
@@ -489,7 +584,7 @@
                           {#each Array(5 - review.rating) as _}<span class="text-muted">★</span>{/each}
                         </span>
                         {#if review.fromUserId === currentUserEmail || isAdmin}
-                        <button class="btn btn-outline-primary btn-sm" onclick={() => startEditingReview(review)}>✏️</button>
+                          <button class="btn btn-outline-primary btn-sm" onclick={() => startEditingReview(review)}>✏️</button>
                         {/if}
                         {#if review.fromUserId === currentUserEmail || isAdmin}
                           <form method="POST" action="?/deleteReview" use:enhance class="d-inline">

@@ -27,14 +27,22 @@ public class BookingService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private DiscountService discountService;
+
     public Optional<Booking> createBooking(String rideId, String riderId, int seats) {
-        return createBooking(rideId, riderId, seats, null, null);
+        return createBooking(rideId, riderId, seats, null, null, null);
     }
 
     public Optional<Booking> createBooking(String rideId, String riderId, int seats,
             String pickupLocation, String message) {
+        return createBooking(rideId, riderId, seats, pickupLocation, message, null);
+    }
+
+    public Optional<Booking> createBooking(String rideId, String riderId, int seats,
+            String pickupLocation, String message, String promoCode) {
         
-        // NEU: Prüfen ob User existiert und Profil vollständig ist
+        // Prüfen ob User existiert und Profil vollständig ist
         Optional<User> userOpt = userRepository.findByEmail(riderId);
         if (userOpt.isEmpty() || !userOpt.get().isProfileComplete()) {
             return Optional.empty();
@@ -80,6 +88,24 @@ public class BookingService {
         // Set message
         if (message != null && !message.isEmpty()) {
             booking.setMessage(message);
+        }
+
+        // Promo-Code verarbeiten
+        double originalPrice = ride.getPricePerSeat() * seats;
+        booking.setOriginalPrice(originalPrice);
+        
+        if (promoCode != null && !promoCode.isEmpty() && discountService.isValidCode(promoCode)) {
+            String code = promoCode.toUpperCase();
+            int percent = discountService.getDiscountPercent(code);
+            double discountAmount = originalPrice * percent / 100;
+            double finalPrice = originalPrice - discountAmount;
+            
+            booking.setPromoCode(code);
+            booking.setDiscountPercent((double) percent);
+            booking.setDiscountAmount(discountAmount);
+            booking.setFinalPrice(finalPrice);
+        } else {
+            booking.setFinalPrice(originalPrice);
         }
 
         return Optional.of(bookingRepository.save(booking));

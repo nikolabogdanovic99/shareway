@@ -31,9 +31,16 @@ public class Booking {
     
     private BookingStatus status = BookingStatus.REQUESTED;
     
-    private String pickupLocation;  // Wo soll der Rider abgeholt werden?
+    private String pickupLocation;
     
-    private String message;  // Optionale Nachricht an den Fahrer
+    private String message;
+    
+    // Promo-Code Felder
+    private String promoCode;
+    private Double discountPercent;
+    private Double discountAmount;
+    private Double originalPrice;
+    private Double finalPrice;
     
     private LocalDateTime createdAt = LocalDateTime.now();
     

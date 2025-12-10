@@ -107,6 +107,7 @@ export const actions = {
         const data = await request.formData();
         const pickupLocation = data.get('pickupLocation') || '';
         const message = data.get('message') || '';
+        const promoCode = data.get('promoCode') || '';
 
         if (!pickupLocation) {
             return { success: false, error: 'Please select a pickup location' };
@@ -120,6 +121,9 @@ export const actions = {
             if (message) {
                 url.searchParams.append('message', message);
             }
+            if (promoCode) {
+                url.searchParams.append('promoCode', promoCode);
+            }
 
             await axios({
                 method: "put",
@@ -130,6 +134,29 @@ export const actions = {
         } catch (err) {
             console.log('Error booking ride:', err);
             return { success: false, error: 'Could not book ride' };
+        }
+    },
+
+    validatePromoCode: async ({ request, locals }) => {
+        const jwt_token = locals.jwt_token;
+
+        if (!jwt_token) {
+            return { success: false, error: 'Authentication required' };
+        }
+
+        const data = await request.formData();
+        const code = data.get('code') || '';
+        const price = parseFloat(data.get('price')) || 0;
+
+        try {
+            const response = await axios({
+                method: "get",
+                url: `${API_BASE_URL}/api/service/discount/validate?code=${code}&price=${price}`,
+                headers: { Authorization: "Bearer " + jwt_token },
+            });
+            return { success: true, discount: response.data };
+        } catch (err) {
+            return { success: false, error: 'Invalid promo code' };
         }
     },
 

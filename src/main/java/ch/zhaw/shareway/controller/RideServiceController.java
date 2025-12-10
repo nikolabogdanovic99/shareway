@@ -24,13 +24,10 @@ import ch.zhaw.shareway.model.VerificationStatus;
 import ch.zhaw.shareway.repository.RideRepository;
 import ch.zhaw.shareway.repository.UserRepository;
 import ch.zhaw.shareway.service.BookingService;
+import ch.zhaw.shareway.service.DiscountService;
 import ch.zhaw.shareway.service.RideService;
 import ch.zhaw.shareway.service.UserService;
 
-/**
- * Controller for service-related endpoints
- * Handles business logic operations for rides and bookings
- */
 @RestController
 @RequestMapping("/api/service")
 public class RideServiceController {
@@ -42,6 +39,9 @@ public class RideServiceController {
     private BookingService bookingService;
 
     @Autowired
+    private DiscountService discountService;
+
+    @Autowired
     private RideRepository rideRepository;
 
     @Autowired
@@ -50,10 +50,6 @@ public class RideServiceController {
     @Autowired
     private UserService userService;
 
-    /**
-     * Complete a ride (Driver only)
-     * PUT /api/service/rides/complete
-     */
     @PutMapping("/rides/complete")
     public ResponseEntity<Ride> completeRide(@RequestBody RideCompleteDTO dto) {
         Optional<Ride> ride = rideService.completeRide(dto.getRideId(), dto.getDriverId());
@@ -65,10 +61,6 @@ public class RideServiceController {
         return ResponseEntity.badRequest().build();
     }
 
-    /**
-     * Approve a booking (Driver only)
-     * PUT /api/service/bookings/approve
-     */
     @PutMapping("/bookings/approve")
     public ResponseEntity<Booking> approveBooking(@RequestBody BookingActionDTO dto) {
         Optional<Booking> booking = bookingService.approveBooking(
@@ -82,10 +74,6 @@ public class RideServiceController {
         return ResponseEntity.badRequest().build();
     }
 
-    /**
-     * Reject a booking (Driver only)
-     * PUT /api/service/bookings/reject
-     */
     @PutMapping("/bookings/reject")
     public ResponseEntity<Booking> rejectBooking(@RequestBody BookingActionDTO dto) {
         Optional<Booking> booking = bookingService.rejectBooking(
@@ -99,10 +87,6 @@ public class RideServiceController {
         return ResponseEntity.badRequest().build();
     }
 
-    /**
-     * Get driver dashboard with rides grouped by status
-     * GET /api/service/dashboard/driver?driverId=...
-     */
     @GetMapping("/dashboard/driver")
     public ResponseEntity<List<RideStatusAggregationDTO>> getDriverDashboard(
             @RequestParam String driverId) {
@@ -111,19 +95,45 @@ public class RideServiceController {
     }
 
     /**
-     * Book a ride for myself (Rider)
-     * PUT
-     * /api/service/me/bookride?rideId=...&seats=...&pickupLocation=...&message=...
+     * Promo-Code validieren
+     * GET /api/service/discount/validate?code=...&price=...
+     */
+    @GetMapping("/discount/validate")
+    public ResponseEntity<?> validatePromoCode(
+            @RequestParam String code,
+            @RequestParam double price) {
+        
+        if (!discountService.isValidCode(code)) {
+            return ResponseEntity.badRequest().body("Invalid promo code");
+        }
+        
+        int percent = discountService.getDiscountPercent(code);
+        double discountAmount = price * percent / 100;
+        double finalPrice = price - discountAmount;
+        
+        return ResponseEntity.ok(new java.util.HashMap<String, Object>() {{
+            put("valid", true);
+            put("code", code.toUpperCase());
+            put("discountPercent", percent);
+            put("discountAmount", discountAmount);
+            put("originalPrice", price);
+            put("finalPrice", finalPrice);
+        }});
+    }
+
+    /**
+     * Book a ride for myself (Rider) - MIT PROMO-CODE
      */
     @PutMapping("/me/bookride")
     public ResponseEntity<Booking> bookRideForMe(
             @RequestParam String rideId,
             @RequestParam(defaultValue = "1") int seats,
             @RequestParam(required = false) String pickupLocation,
-            @RequestParam(required = false) String message) {
+            @RequestParam(required = false) String message,
+            @RequestParam(required = false) String promoCode) {
         String userEmail = userService.getEmail();
         Optional<Booking> booking = bookingService.createBooking(
-                rideId, userEmail, seats, pickupLocation, message);
+                rideId, userEmail, seats, pickupLocation, message, promoCode);
 
         if (booking.isPresent()) {
             return ResponseEntity.ok(booking.get());
@@ -131,10 +141,6 @@ public class RideServiceController {
         return ResponseEntity.badRequest().build();
     }
 
-    /**
-     * Approve a booking for my ride (Driver)
-     * PUT /api/service/me/approvebooking?bookingId=...
-     */
     @PutMapping("/me/approvebooking")
     public ResponseEntity<Booking> approveMyBooking(@RequestParam String bookingId) {
         String userEmail = userService.getEmail();
@@ -146,10 +152,6 @@ public class RideServiceController {
         return ResponseEntity.badRequest().build();
     }
 
-    /**
-     * Reject a booking for my ride (Driver)
-     * PUT /api/service/me/rejectbooking?bookingId=...
-     */
     @PutMapping("/me/rejectbooking")
     public ResponseEntity<Booking> rejectMyBooking(@RequestParam String bookingId) {
         String userEmail = userService.getEmail();
@@ -161,10 +163,6 @@ public class RideServiceController {
         return ResponseEntity.badRequest().build();
     }
 
-    /**
-     * Verify a user (Admin only)
-     * PUT /api/service/admin/verify?userId=...
-     */
     @PutMapping("/admin/verify")
     public ResponseEntity<User> verifyUser(@RequestParam String userId) {
         if (!userService.userHasRole("admin")) {
@@ -182,10 +180,6 @@ public class RideServiceController {
         return ResponseEntity.ok(savedUser);
     }
 
-    /**
-     * Reject a user verification (Admin only)
-     * PUT /api/service/admin/reject?userId=...
-     */
     @PutMapping("/admin/reject")
     public ResponseEntity<User> rejectUser(@RequestParam String userId) {
         if (!userService.userHasRole("admin")) {
@@ -203,10 +197,6 @@ public class RideServiceController {
         return ResponseEntity.ok(savedUser);
     }
 
-    /**
-     * Complete my ride (Driver only)
-     * PUT /api/service/me/completeride?rideId=...
-     */
     @PutMapping("/me/completeride")
     public ResponseEntity<Ride> completeMyRide(@RequestParam String rideId) {
         String userEmail = userService.getEmail();
@@ -218,12 +208,10 @@ public class RideServiceController {
 
         Ride ride = optRide.get();
 
-        // Nur eigene Rides oder Admin
         if (!ride.getDriverId().equals(userEmail) && !userService.userHasRole("admin")) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
-        // Nur OPEN oder IN_PROGRESS können completed werden
         if (ride.getStatus() != RideStatus.OPEN && ride.getStatus() != RideStatus.IN_PROGRESS) {
             return ResponseEntity.badRequest().build();
         }
@@ -233,10 +221,6 @@ public class RideServiceController {
         return ResponseEntity.ok(savedRide);
     }
 
-    /**
-     * Cancel my booking (Rider)
-     * PUT /api/service/me/cancelbooking?bookingId=...
-     */
     @PutMapping("/me/cancelbooking")
     public ResponseEntity<Booking> cancelMyBooking(@RequestParam String bookingId) {
         String userEmail = userService.getEmail();
