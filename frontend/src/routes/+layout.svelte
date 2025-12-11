@@ -52,14 +52,20 @@
               </a>
             </li>
           {/if}
-          {#if user.user_roles && user.user_roles.includes("admin")}
-            <li class="nav-item">
-              <a class="nav-link" href="/admin/verifications">
-                <i class="bi bi-shield-check me-1"></i>
-                Verifications
-              </a>
-            </li>
-          {/if}
+{#if user.user_roles && user.user_roles.includes("admin")}
+  <li class="nav-item">
+    <a class="nav-link" href="/admin/verifications">
+      <i class="bi bi-shield-check me-1"></i>
+      Verifications
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="/admin/moderation">
+      <i class="bi bi-exclamation-triangle me-1"></i>
+      Moderation
+    </a>
+  </li>
+{/if}
         {/if}
       </ul>
       <div class="d-flex align-items-center gap-2">
