@@ -26,6 +26,7 @@ import ch.zhaw.shareway.repository.BookingRepository;
 import ch.zhaw.shareway.repository.ReviewRepository;
 import ch.zhaw.shareway.repository.RideRepository;
 import ch.zhaw.shareway.repository.UserRepository;
+import ch.zhaw.shareway.service.ContentModerationService;
 import ch.zhaw.shareway.service.UserService;
 
 @RestController
@@ -46,6 +47,9 @@ public class ReviewController {
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    ContentModerationService contentModerationService;
 
     // POST /api/reviews - Neue Bewertung erstellen
     @PostMapping("/reviews")
@@ -92,6 +96,9 @@ public class ReviewController {
                 dto.getComment());
 
         Review savedReview = reviewRepository.save(review);
+
+        // KI Content Moderation
+        contentModerationService.checkContent("REVIEW", savedReview.getId(), dto.getComment(), userEmail);
 
         // User Rating aktualisieren
         updateUserRating(ride.getDriverId());
@@ -160,6 +167,9 @@ public class ReviewController {
 
         Review savedReview = reviewRepository.save(review);
 
+        // KI Content Moderation
+        contentModerationService.checkContent("REVIEW", savedReview.getId(), dto.getComment(), userEmail);
+
         // User Rating aktualisieren
         updateUserRating(review.getToUserId());
 
@@ -208,7 +218,7 @@ public class ReviewController {
         Optional<User> optUser = userRepository.findByEmail(userId);
         if (optUser.isPresent()) {
             User user = optUser.get();
-            user.setRating(Math.round(averageRating * 10.0) / 10.0); // Eine Dezimalstelle
+            user.setRating(Math.round(averageRating * 10.0) / 10.0);
             user.setReviewCount(reviews.size());
             userRepository.save(user);
         }

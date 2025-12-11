@@ -172,9 +172,7 @@
   );
 
   // Check if ride can be edited
-const canEditRide = $derived(
-  isMyRide && ride?.status === "OPEN"
-);
+  const canEditRide = $derived(isMyRide && ride?.status === "OPEN");
 
   // Start editing
   function startEditing() {
@@ -657,11 +655,11 @@ const canEditRide = $derived(
             {/if}
           </div>
 
-<!-- Driver Reviews -->
+          <!-- Driver Reviews -->
           <div class="card-footer p-0">
             <div class="p-3" style="max-height: 400px; overflow-y: auto;">
               <h6 class="mb-3"><i class="bi bi-chat-quote me-2"></i>Reviews</h6>
-              
+
               {#if driverReviews.length === 0}
                 <p class="text-muted small">No reviews yet.</p>
               {:else}
@@ -670,7 +668,11 @@ const canEditRide = $derived(
                     {#if editingReviewId === review.id}
                       <!-- Edit Mode -->
                       <form method="POST" action="?/updateReview" use:enhance>
-                        <input type="hidden" name="reviewId" value={review.id} />
+                        <input
+                          type="hidden"
+                          name="reviewId"
+                          value={review.id}
+                        />
                         <div class="mb-2">
                           <div class="d-flex gap-1">
                             {#each [1, 2, 3, 4, 5] as star}
@@ -684,7 +686,11 @@ const canEditRide = $derived(
                               </button>
                             {/each}
                           </div>
-                          <input type="hidden" name="rating" value={editReviewRating} />
+                          <input
+                            type="hidden"
+                            name="rating"
+                            value={editReviewRating}
+                          />
                         </div>
                         <div class="mb-2">
                           <textarea
@@ -695,18 +701,32 @@ const canEditRide = $derived(
                           ></textarea>
                         </div>
                         <div class="d-flex gap-1">
-                          <button type="submit" class="btn btn-primary btn-sm">Save</button>
-                          <button type="button" class="btn btn-secondary btn-sm" onclick={cancelEditingReview}>Cancel</button>
+                          <button type="submit" class="btn btn-primary btn-sm"
+                            >Save</button
+                          >
+                          <button
+                            type="button"
+                            class="btn btn-secondary btn-sm"
+                            onclick={cancelEditingReview}>Cancel</button
+                          >
                         </div>
                       </form>
                     {:else}
                       <!-- View Mode -->
-                      <div class="d-flex justify-content-between align-items-center mb-1">
-                        <small class="fw-bold">{getReviewerName(review.fromUserId)}</small>
+                      <div
+                        class="d-flex justify-content-between align-items-center mb-1"
+                      >
+                        <small class="fw-bold"
+                          >{getReviewerName(review.fromUserId)}</small
+                        >
                         <div class="d-flex align-items-center gap-1">
                           <small class="text-warning">
-                            {#each Array(review.rating) as _}<i class="bi bi-star-fill"></i>{/each}
-                            {#each Array(5 - review.rating) as _}<i class="bi bi-star text-muted"></i>{/each}
+                            {#each Array(review.rating) as _}<i
+                                class="bi bi-star-fill"
+                              ></i>{/each}
+                            {#each Array(5 - review.rating) as _}<i
+                                class="bi bi-star text-muted"
+                              ></i>{/each}
                           </small>
                           {#if review.fromUserId === currentUserEmail}
                             <button
@@ -715,12 +735,26 @@ const canEditRide = $derived(
                             >
                               <i class="bi bi-pencil"></i>
                             </button>
-                            <form method="POST" action="?/deleteReview" use:enhance class="d-inline">
-                              <input type="hidden" name="reviewId" value={review.id} />
+                          {/if}
+                          {#if review.fromUserId === currentUserEmail || isAdmin}
+                            <form
+                              method="POST"
+                              action="?/deleteReview"
+                              use:enhance
+                              class="d-inline"
+                            >
+                              <input
+                                type="hidden"
+                                name="reviewId"
+                                value={review.id}
+                              />
                               <button
                                 type="submit"
                                 class="btn btn-outline-danger btn-sm p-0 px-1"
-                                onclick={(e) => { if (!confirm('Delete this review?')) e.preventDefault(); }}
+                                onclick={(e) => {
+                                  if (!confirm("Delete this review?"))
+                                    e.preventDefault();
+                                }}
                               >
                                 <i class="bi bi-trash"></i>
                               </button>
@@ -729,7 +763,9 @@ const canEditRide = $derived(
                         </div>
                       </div>
                       {#if review.comment}
-                        <small class="text-muted fst-italic">"{review.comment}"</small>
+                        <small class="text-muted fst-italic"
+                          >"{review.comment}"</small
+                        >
                       {/if}
                     {/if}
                   </div>
@@ -739,7 +775,9 @@ const canEditRide = $derived(
               <!-- Write Review Form -->
               {#if canReview}
                 <hr />
-                <h6 class="mb-2"><i class="bi bi-pencil me-2"></i>Write a Review</h6>
+                <h6 class="mb-2">
+                  <i class="bi bi-pencil me-2"></i>Write a Review
+                </h6>
                 <form method="POST" action="?/submitReview" use:enhance>
                   <div class="mb-2">
                     <div class="d-flex gap-1">
@@ -772,12 +810,13 @@ const canEditRide = $derived(
 
               {#if hasReviewed}
                 <div class="alert alert-info small py-2 mb-0 mt-2">
-                  <i class="bi bi-check-circle me-1"></i>You reviewed this driver.
+                  <i class="bi bi-check-circle me-1"></i>You reviewed this
+                  driver.
                 </div>
               {/if}
             </div>
           </div>
-          </div>
+        </div>
       </div>
     </div>
   {/if}
