@@ -1,0 +1,32 @@
+{
+  "makes": ["Audi", "BMW", "Fiat", "Ford", "Honda", "Hyundai", "Kia", "Mazda", "Mercedes", "Nissan", "Opel", "Peugeot", "Renault", "Seat", "Skoda", "Tesla", "Toyota", "VW", "Volvo"],
+  "models": {
+    "Audi": ["A1", "A3", "A4", "A6", "Q3", "Q5", "Q7", "e-tron"],
+    "BMW": ["1er", "2er", "3er", "5er", "X1", "X3", "X5", "i3", "i4"],
+    "Fiat": ["500", "Panda", "Tipo", "500X"],
+    "Ford": ["Fiesta", "Focus", "Kuga", "Mustang", "Puma"],
+    "Honda": ["Civic", "CR-V", "HR-V", "Jazz"],
+    "Hyundai": ["i10", "i20", "i30", "Kona", "Tucson"],
+    "Kia": ["Ceed", "Niro", "Picanto", "Sportage"],
+    "Mazda": ["CX-3", "CX-5", "Mazda3", "MX-5"],
+    "Mercedes": ["A-Klasse", "B-Klasse", "C-Klasse", "E-Klasse", "GLA", "GLC"],
+    "Nissan": ["Juke", "Leaf", "Micra", "Qashqai"],
+    "Opel": ["Astra", "Corsa", "Crossland", "Grandland", "Mokka"],
+    "Peugeot": ["208", "308", "2008", "3008", "508"],
+    "Renault": ["Captur", "Clio", "Megane", "Scenic", "Zoe"],
+    "Seat": ["Arona", "Ateca", "Ibiza", "Leon"],
+    "Skoda": ["Fabia", "Kamiq", "Karoq", "Kodiaq", "Octavia", "Superb"],
+    "Tesla": ["Model 3", "Model S", "Model X", "Model Y"],
+    "Toyota": ["Aygo", "C-HR", "Corolla", "RAV4", "Yaris", "Prius"],
+    "VW": ["Golf", "ID.3", "ID.4", "Passat", "Polo", "T-Roc", "Tiguan"],
+    "Volvo": ["S60", "V40", "V60", "XC40", "XC60"]
+  },
+  "types": {
+    "suv": ["Q3", "Q5", "Q7", "X1", "X3", "X5", "500X", "Kuga", "Puma", "CR-V", "HR-V", "Kona", "Tucson", "Sportage", "CX-3", "CX-5", "GLA", "GLC", "Juke", "Qashqai", "Crossland", "Grandland", "Mokka", "2008", "3008", "Captur", "Scenic", "Arona", "Ateca", "Kamiq", "Karoq", "Kodiaq", "Model X", "Model Y", "C-HR", "RAV4", "T-Roc", "Tiguan", "XC40", "XC60"],
+    "electric": ["e-tron", "i3", "i4", "Leaf", "Zoe", "Model 3", "Model S", "ID.3", "ID.4", "Niro", "Prius"],
+    "hatchback": ["A1", "1er", "2er", "500", "Panda", "Fiesta", "Focus", "Jazz", "i10", "i20", "i30", "Ceed", "Picanto", "A-Klasse", "B-Klasse", "Micra", "Astra", "Corsa", "208", "308", "Clio", "Ibiza", "Leon", "Fabia", "Aygo", "Yaris", "Golf", "Polo"],
+    "sedan": ["A3", "A4", "A6", "3er", "5er", "Tipo", "Civic", "Mazda3", "C-Klasse", "E-Klasse", "508", "Megane", "Octavia", "Superb", "Corolla", "Passat", "S60", "V40", "V60"]
+  },
+  "colors": ["Schwarz", "Weiss", "Silber", "Grau", "Rot", "Blau", "Grün"],
+  "cantons": ["AG", "AI", "AR", "BE", "BL", "BS", "FR", "GE", "GL", "GR", "JU", "LU", "NE", "NW", "OW", "SG", "SH", "SO", "SZ", "TG", "TI", "UR", "VD", "VS", "ZG", "ZH"]
+}

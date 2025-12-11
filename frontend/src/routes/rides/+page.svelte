@@ -10,6 +10,7 @@
   let nrOfPages = $state(data.nrOfPages || 0);
   let currentUserEmail = $state(data.currentUserEmail || '');
   let dbUser = $state(data.dbUser);
+  let user = $state(data.user);
   const pageSize = 10;
 
   // Filter states
@@ -17,6 +18,7 @@
   let filterTo = $state(data.filterTo || '');
   let filterMaxPrice = $state(data.filterMaxPrice || '');
   let filterDate = $state(data.filterDate || '');
+  let filterStatus = $state(data.filterStatus || '');
 
   // Sort state
   let sortBy = $state('departure-asc');
@@ -29,13 +31,16 @@
     nrOfPages = data.nrOfPages || 0;
     currentUserEmail = data.currentUserEmail || '';
     dbUser = data.dbUser;
+    user = data.user;
     filterFrom = data.filterFrom || '';
     filterTo = data.filterTo || '';
     filterMaxPrice = data.filterMaxPrice || '';
     filterDate = data.filterDate || '';
+    filterStatus = data.filterStatus || '';
   });
 
   const isProfileComplete = $derived(dbUser?.firstName && dbUser?.lastName);
+  const isAdmin = $derived(user?.user_roles?.includes('admin'));
 
   function getDriverName(driverId) {
     if (!users || users.length === 0) return "Unknown";
@@ -77,6 +82,15 @@
     }
   }
 
+  function getStatusClass(status) {
+    switch (status) {
+      case 'OPEN': return 'bg-success';
+      case 'FULL': return 'bg-warning text-dark';
+      case 'COMPLETED': return 'bg-secondary';
+      default: return 'bg-secondary';
+    }
+  }
+
   // Sorted rides
   const sortedRides = $derived(() => {
     const sorted = [...rides];
@@ -105,6 +119,7 @@
     if (filterTo) params.set('to', filterTo);
     if (filterMaxPrice) params.set('maxPrice', filterMaxPrice);
     if (filterDate) params.set('date', filterDate);
+    if (filterStatus) params.set('status', filterStatus);
     goto(`/rides?${params.toString()}`);
   }
 
@@ -114,11 +129,12 @@
     filterTo = '';
     filterMaxPrice = '';
     filterDate = '';
+    filterStatus = '';
     goto('/rides');
   }
 
   // Check if any filter is active
-  const hasActiveFilters = $derived(filterFrom || filterTo || filterMaxPrice || filterDate);
+  const hasActiveFilters = $derived(filterFrom || filterTo || filterMaxPrice || filterDate || filterStatus);
 </script>
 
 <h1 class="mt-3">Available Rides</h1>
@@ -133,9 +149,9 @@
 <!-- Filter Section -->
 <div class="card mb-4">
   <div class="card-body">
-    <h6 class="card-title mb-3">🔍 Filter Rides</h6>
+    <h6 class="card-title mb-3"><i class="bi bi-search me-2"></i>Filter Rides</h6>
     <div class="row g-3">
-      <div class="col-md-3">
+      <div class="col-md-2">
         <label class="form-label" for="filterFrom">From</label>
         <input 
           class="form-control" 
@@ -145,7 +161,7 @@
           bind:value={filterFrom}
         />
       </div>
-      <div class="col-md-3">
+      <div class="col-md-2">
         <label class="form-label" for="filterTo">To</label>
         <input 
           class="form-control" 
@@ -156,13 +172,13 @@
         />
       </div>
       <div class="col-md-2">
-        <label class="form-label" for="filterMaxPrice">Max Price (CHF)</label>
+        <label class="form-label" for="filterMaxPrice">Max Price</label>
         <input 
           class="form-control" 
           id="filterMaxPrice" 
           type="number" 
           min="0"
-          placeholder="e.g. 25"
+          placeholder="CHF"
           bind:value={filterMaxPrice}
         />
       </div>
@@ -175,6 +191,17 @@
           bind:value={filterDate}
         />
       </div>
+ {#if isAdmin}
+  <div class="col-md-2">
+    <label class="form-label" for="filterStatus">Status</label>
+    <select class="form-select" id="filterStatus" bind:value={filterStatus}>
+      <option value="">All</option>
+      <option value="OPEN">Open</option>
+      <option value="FULL">Full</option>
+      <option value="COMPLETED">Completed</option>
+    </select>
+  </div>
+{/if}
       <div class="col-md-2 d-flex align-items-end gap-2">
         <button class="btn btn-primary" onclick={applyFilters}>
           Search
@@ -227,7 +254,10 @@
         <th>Departure</th>
         <th>Driver</th>
         <th>Price/Seat</th>
-        <th>Seats Free</th>
+        <th>Seats</th>
+        {#if isAdmin}
+          <th>Status</th>
+        {/if}
       </tr>
     </thead>
     <tbody>
@@ -255,6 +285,11 @@
               {ride.seatsFree} / {ride.seatsTotal}
             {/if}
           </td>
+          {#if isAdmin}
+            <td>
+              <span class="badge {getStatusClass(ride.status)}">{ride.status}</span>
+            </td>
+          {/if}
         </tr>
       {/each}
     </tbody>
@@ -269,6 +304,7 @@
           {#if filterTo}{params.set('to', filterTo)}{/if}
           {#if filterMaxPrice}{params.set('maxPrice', filterMaxPrice)}{/if}
           {#if filterDate}{params.set('date', filterDate)}{/if}
+          {#if filterStatus}{params.set('status', filterStatus)}{/if}
           <li class="page-item">
             <a class="page-link" class:active={currentPage == i + 1} 
                href="/rides?pageNumber={i + 1}&pageSize={pageSize}&{params.toString()}">

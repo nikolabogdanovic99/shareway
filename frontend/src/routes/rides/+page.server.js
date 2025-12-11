@@ -17,10 +17,12 @@ export async function load({ url, locals }) {
             currentPage: 1,
             currentUserEmail: '',
             dbUser: null,
+            user: null,
             filterFrom: '',
             filterTo: '',
             filterMaxPrice: '',
-            filterDate: ''
+            filterDate: '',
+            filterStatus: ''
         };
     }
     
@@ -38,10 +40,23 @@ export async function load({ url, locals }) {
     const filterTo = url.searchParams.get('to') || '';
     const filterMaxPrice = url.searchParams.get('maxPrice') || '';
     const filterDate = url.searchParams.get('date') || '';
+    const filterStatus = url.searchParams.get('status') || '';
 
-    // Load rides - nur OPEN
+    // Load rides
     try {
-        let query = `?pageSize=${pageSize}&pageNumber=${currentPage}&status=OPEN`;
+        const isAdmin = user_info?.user_roles?.includes('admin');
+        
+        let query = `?pageSize=${pageSize}&pageNumber=${currentPage}`;
+        
+        // Admin: use selected filter or show all. User: always OPEN only
+        if (isAdmin) {
+            if (filterStatus) {
+                query += `&status=${filterStatus}`;
+            }
+        } else {
+            query += '&status=OPEN';
+        }
+        
         if (filterMaxPrice) {
             query += `&maxPrice=${filterMaxPrice}`;
         }
@@ -54,7 +69,7 @@ export async function load({ url, locals }) {
         
         let allRides = ridesResponse.data.content || [];
         
-        // Client-side filtering for from/to/date (backend doesn't support these yet)
+        // Client-side filtering for from/to/date
         if (filterFrom) {
             allRides = allRides.filter(r => 
                 r.startLocation.toLowerCase().includes(filterFrom.toLowerCase())
@@ -123,9 +138,11 @@ export async function load({ url, locals }) {
         currentPage,
         currentUserEmail: userEmail,
         dbUser,
+        user: user_info,
         filterFrom,
         filterTo,
         filterMaxPrice,
-        filterDate
+        filterDate,
+        filterStatus
     };
 }

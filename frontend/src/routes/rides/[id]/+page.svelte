@@ -40,6 +40,7 @@
   let isValidatingPromo = $state(false);
 
   let approvedBookings = $state(data.approvedBookings || []);
+  let driverReviews = $state(data.driverReviews || []);
 
   $effect(() => {
     ride = data.ride;
@@ -50,6 +51,7 @@
     currentUserEmail = data.currentUserEmail;
     user = data.user;
     approvedBookings = data.approvedBookings || [];
+    driverReviews = data.driverReviews || [];
 
     // Reset edit mode on successful update
     if (form?.success && form?.action === "updated") {
@@ -170,10 +172,9 @@
   );
 
   // Check if ride can be edited
-  const canEditRide = $derived(
-    (isAdmin && ride?.status !== "COMPLETED") ||
-      (isMyRide && ride?.status === "OPEN"),
-  );
+const canEditRide = $derived(
+  isMyRide && ride?.status === "OPEN"
+);
 
   // Start editing
   function startEditing() {
@@ -615,168 +616,13 @@
             </div>
           </div>
         {/if}
-
-        <!-- Reviews Section -->
-        <div class="card mb-4">
-          <div class="card-header">
-            <h5 class="mb-0">Reviews ({reviews.length})</h5>
-          </div>
-          <div class="card-body">
-            {#if canReview}
-              <form
-                method="POST"
-                action="?/submitReview"
-                use:enhance
-                class="mb-4"
-              >
-                <h6>Write a Review</h6>
-                <div class="mb-3">
-                  <label class="form-label">Rating</label>
-                  <div class="d-flex gap-2">
-                    {#each [1, 2, 3, 4, 5] as star}
-                      <button
-                        type="button"
-                        class="btn btn-outline-warning"
-                        class:btn-warning={selectedRating >= star}
-                        onclick={() => (selectedRating = star)}
-                      >
-                        ★
-                      </button>
-                    {/each}
-                  </div>
-                  <input type="hidden" name="rating" value={selectedRating} />
-                </div>
-                <div class="mb-3">
-                  <label class="form-label" for="comment">Comment</label>
-                  <textarea
-                    class="form-control"
-                    id="comment"
-                    name="comment"
-                    rows="3"
-                    placeholder="Share your experience..."
-                  ></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary"
-                  >Submit Review</button
-                >
-              </form>
-              <hr />
-            {/if}
-
-            {#if hasReviewed}
-              <div class="alert alert-info">
-                You have already reviewed this ride.
-              </div>
-            {/if}
-
-            {#if reviews.length === 0}
-              <p class="text-muted">No reviews yet.</p>
-            {:else}
-              {#each reviews as review}
-                <div class="border-bottom pb-3 mb-3">
-                  {#if editingReviewId === review.id}
-                    <!-- Edit Mode -->
-                    <form method="POST" action="?/updateReview" use:enhance>
-                      <input type="hidden" name="reviewId" value={review.id} />
-                      <div class="mb-2">
-                        <label class="form-label">Rating</label>
-                        <div class="d-flex gap-2">
-                          {#each [1, 2, 3, 4, 5] as star}
-                            <button
-                              type="button"
-                              class="btn btn-sm btn-outline-warning"
-                              class:btn-warning={editReviewRating >= star}
-                              onclick={() => (editReviewRating = star)}
-                            >
-                              ★
-                            </button>
-                          {/each}
-                        </div>
-                        <input
-                          type="hidden"
-                          name="rating"
-                          value={editReviewRating}
-                        />
-                      </div>
-                      <div class="mb-2">
-                        <textarea
-                          class="form-control"
-                          name="comment"
-                          rows="2"
-                          bind:value={editReviewComment}
-                        ></textarea>
-                      </div>
-                      <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary btn-sm"
-                          >Save</button
-                        >
-                        <button
-                          type="button"
-                          class="btn btn-secondary btn-sm"
-                          onclick={cancelEditingReview}>Cancel</button
-                        >
-                      </div>
-                    </form>
-                  {:else}
-                    <!-- View Mode -->
-                    <div class="d-flex justify-content-between">
-                      <strong>{getReviewerName(review.fromUserId)}</strong>
-                      <div class="d-flex align-items-center gap-2">
-                        <span class="text-warning">
-                          {#each Array(review.rating) as _}★{/each}
-                          {#each Array(5 - review.rating) as _}<span
-                              class="text-muted">★</span
-                            >{/each}
-                        </span>
-                        {#if review.fromUserId === currentUserEmail || isAdmin}
-                          <button
-                            class="btn btn-outline-primary btn-sm"
-                            onclick={() => startEditingReview(review)}
-                            >✏️</button
-                          >
-                        {/if}
-                        {#if review.fromUserId === currentUserEmail || isAdmin}
-                          <form
-                            method="POST"
-                            action="?/deleteReview"
-                            use:enhance
-                            class="d-inline"
-                          >
-                            <input
-                              type="hidden"
-                              name="reviewId"
-                              value={review.id}
-                            />
-                            <button
-                              type="submit"
-                              class="btn btn-outline-danger btn-sm"
-                              onclick={(e) => {
-                                if (!confirm("Delete this review?")) {
-                                  e.preventDefault();
-                                }
-                              }}>🗑️</button
-                            >
-                          </form>
-                        {/if}
-                      </div>
-                    </div>
-                    <p class="mb-1">{review.comment}</p>
-                    <small class="text-muted"
-                      >{formatDate(review.createdAt)}</small
-                    >
-                  {/if}
-                </div>
-              {/each}
-            {/if}
-          </div>
-        </div>
       </div>
 
       <!-- Driver Info Sidebar -->
       <div class="col-md-4">
         <div class="card mb-4">
           <div class="card-header">
-            <h5 class="mb-0">Driver</h5>
+            <h5 class="mb-0"><i class="bi bi-person-circle me-2"></i>Driver</h5>
           </div>
           <div class="card-body text-center">
             {#if driver?.profileImage}
@@ -787,35 +633,152 @@
                 style="width: 100px; height: 100px; object-fit: cover;"
               />
             {:else}
-              <div
-                class="bg-secondary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
-                style="width: 100px; height: 100px;"
-              >
-                <span class="text-white fs-4"
-                  >{driver?.firstName?.charAt(0) ||
-                    "?"}{driver?.lastName?.charAt(0) || ""}</span
-                >
+              <div class="avatar avatar-xl mx-auto mb-3">
+                {driver?.firstName?.charAt(0) || "?"}{driver?.lastName?.charAt(
+                  0,
+                ) || ""}
               </div>
             {/if}
             <h5>{driver?.firstName || ""} {driver?.lastName || ""}</h5>
             {#if driver?.rating > 0}
               <p class="text-warning mb-1">
-                {#each Array(Math.round(driver.rating)) as _}★{/each}
-                {#each Array(5 - Math.round(driver.rating)) as _}<span
-                    class="text-muted">★</span
-                  >{/each}
+                {#each Array(Math.round(driver.rating)) as _}<i
+                    class="bi bi-star-fill"
+                  ></i>{/each}
+                {#each Array(5 - Math.round(driver.rating)) as _}<i
+                    class="bi bi-star text-muted"
+                  ></i>{/each}
               </p>
-              <p class="text-muted">
+              <p class="text-muted mb-0">
                 {driver.rating.toFixed(1)} ({driver.reviewCount} reviews)
               </p>
             {:else}
               <p class="text-muted">No ratings yet</p>
             {/if}
           </div>
-        </div>
+
+<!-- Driver Reviews -->
+          <div class="card-footer p-0">
+            <div class="p-3" style="max-height: 400px; overflow-y: auto;">
+              <h6 class="mb-3"><i class="bi bi-chat-quote me-2"></i>Reviews</h6>
+              
+              {#if driverReviews.length === 0}
+                <p class="text-muted small">No reviews yet.</p>
+              {:else}
+                {#each driverReviews as review}
+                  <div class="mb-3 pb-2 border-bottom">
+                    {#if editingReviewId === review.id}
+                      <!-- Edit Mode -->
+                      <form method="POST" action="?/updateReview" use:enhance>
+                        <input type="hidden" name="reviewId" value={review.id} />
+                        <div class="mb-2">
+                          <div class="d-flex gap-1">
+                            {#each [1, 2, 3, 4, 5] as star}
+                              <button
+                                type="button"
+                                class="btn btn-sm btn-outline-warning p-1"
+                                class:btn-warning={editReviewRating >= star}
+                                onclick={() => (editReviewRating = star)}
+                              >
+                                ★
+                              </button>
+                            {/each}
+                          </div>
+                          <input type="hidden" name="rating" value={editReviewRating} />
+                        </div>
+                        <div class="mb-2">
+                          <textarea
+                            class="form-control form-control-sm"
+                            name="comment"
+                            rows="2"
+                            bind:value={editReviewComment}
+                          ></textarea>
+                        </div>
+                        <div class="d-flex gap-1">
+                          <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                          <button type="button" class="btn btn-secondary btn-sm" onclick={cancelEditingReview}>Cancel</button>
+                        </div>
+                      </form>
+                    {:else}
+                      <!-- View Mode -->
+                      <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="fw-bold">{getReviewerName(review.fromUserId)}</small>
+                        <div class="d-flex align-items-center gap-1">
+                          <small class="text-warning">
+                            {#each Array(review.rating) as _}<i class="bi bi-star-fill"></i>{/each}
+                            {#each Array(5 - review.rating) as _}<i class="bi bi-star text-muted"></i>{/each}
+                          </small>
+                          {#if review.fromUserId === currentUserEmail}
+                            <button
+                              class="btn btn-outline-primary btn-sm p-0 px-1"
+                              onclick={() => startEditingReview(review)}
+                            >
+                              <i class="bi bi-pencil"></i>
+                            </button>
+                            <form method="POST" action="?/deleteReview" use:enhance class="d-inline">
+                              <input type="hidden" name="reviewId" value={review.id} />
+                              <button
+                                type="submit"
+                                class="btn btn-outline-danger btn-sm p-0 px-1"
+                                onclick={(e) => { if (!confirm('Delete this review?')) e.preventDefault(); }}
+                              >
+                                <i class="bi bi-trash"></i>
+                              </button>
+                            </form>
+                          {/if}
+                        </div>
+                      </div>
+                      {#if review.comment}
+                        <small class="text-muted fst-italic">"{review.comment}"</small>
+                      {/if}
+                    {/if}
+                  </div>
+                {/each}
+              {/if}
+
+              <!-- Write Review Form -->
+              {#if canReview}
+                <hr />
+                <h6 class="mb-2"><i class="bi bi-pencil me-2"></i>Write a Review</h6>
+                <form method="POST" action="?/submitReview" use:enhance>
+                  <div class="mb-2">
+                    <div class="d-flex gap-1">
+                      {#each [1, 2, 3, 4, 5] as star}
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-warning p-1"
+                          class:btn-warning={selectedRating >= star}
+                          onclick={() => (selectedRating = star)}
+                        >
+                          ★
+                        </button>
+                      {/each}
+                    </div>
+                    <input type="hidden" name="rating" value={selectedRating} />
+                  </div>
+                  <div class="mb-2">
+                    <textarea
+                      class="form-control form-control-sm"
+                      name="comment"
+                      rows="2"
+                      placeholder="Your experience..."
+                    ></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-sm w-100">
+                    Submit Review
+                  </button>
+                </form>
+              {/if}
+
+              {#if hasReviewed}
+                <div class="alert alert-info small py-2 mb-0 mt-2">
+                  <i class="bi bi-check-circle me-1"></i>You reviewed this driver.
+                </div>
+              {/if}
+            </div>
+          </div>
+          </div>
       </div>
     </div>
-  {:else}
-    <div class="alert alert-danger">Ride not found.</div>
   {/if}
 </div>

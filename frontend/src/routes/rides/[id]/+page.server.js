@@ -20,6 +20,7 @@ export async function load({ params, locals }) {
     let myBooking = null;
     let users = [];
     let approvedBookings = [];
+    let driverReviews = [];  // <-- HIER deklarieren (außerhalb try)
 
     // Load ride
     try {
@@ -45,6 +46,20 @@ export async function load({ params, locals }) {
         driver = users.find(u => u.email === ride.driverId);
     } catch (err) {
         console.log('Error loading users:', err);
+    }
+
+    // Load reviews for this driver
+    if (driver) {
+        try {
+            const driverReviewsResponse = await axios({
+                method: "get",
+                url: `${API_BASE_URL}/api/reviews/user/${driver.email}`,
+                headers: { Authorization: "Bearer " + jwt_token }
+            });
+            driverReviews = driverReviewsResponse.data;
+        } catch (err) {
+            console.log('Error loading driver reviews:', err);
+        }
     }
 
     // Load vehicle
@@ -89,7 +104,6 @@ export async function load({ params, locals }) {
         const isAdmin = user_info?.user_roles?.includes('admin');
         
         if (isDriver || isAdmin) {
-            // Driver/Admin sees all approved pickups
             approvedBookings = allBookings
                 .filter(b => b.rideId === rideId && b.status === 'APPROVED' && b.pickupLocation)
                 .map(b => {
@@ -101,7 +115,6 @@ export async function load({ params, locals }) {
                     };
                 });
         } else if (myBooking && myBooking.status === 'APPROVED' && myBooking.pickupLocation) {
-            // Rider sees only their own pickup
             approvedBookings = [{
                 location: myBooking.pickupLocation,
                 riderName: 'Your Pickup',
@@ -115,6 +128,7 @@ export async function load({ params, locals }) {
     return {
         ride,
         driver,
+        driverReviews,
         vehicle,
         reviews,
         myBooking,
