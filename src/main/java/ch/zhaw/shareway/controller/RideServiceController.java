@@ -25,6 +25,7 @@ import ch.zhaw.shareway.repository.RideRepository;
 import ch.zhaw.shareway.repository.UserRepository;
 import ch.zhaw.shareway.service.BookingService;
 import ch.zhaw.shareway.service.DiscountService;
+import ch.zhaw.shareway.service.MailService;
 import ch.zhaw.shareway.service.RideService;
 import ch.zhaw.shareway.service.UserService;
 
@@ -49,6 +50,9 @@ public class RideServiceController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private MailService mailService;
 
     @PutMapping("/rides/complete")
     public ResponseEntity<Ride> completeRide(@RequestBody RideCompleteDTO dto) {
@@ -102,23 +106,25 @@ public class RideServiceController {
     public ResponseEntity<?> validatePromoCode(
             @RequestParam String code,
             @RequestParam double price) {
-        
+
         if (!discountService.isValidCode(code)) {
             return ResponseEntity.badRequest().body("Invalid promo code");
         }
-        
+
         int percent = discountService.getDiscountPercent(code);
         double discountAmount = price * percent / 100;
         double finalPrice = price - discountAmount;
-        
-        return ResponseEntity.ok(new java.util.HashMap<String, Object>() {{
-            put("valid", true);
-            put("code", code.toUpperCase());
-            put("discountPercent", percent);
-            put("discountAmount", discountAmount);
-            put("originalPrice", price);
-            put("finalPrice", finalPrice);
-        }});
+
+        return ResponseEntity.ok(new java.util.HashMap<String, Object>() {
+            {
+                put("valid", true);
+                put("code", code.toUpperCase());
+                put("discountPercent", percent);
+                put("discountAmount", discountAmount);
+                put("originalPrice", price);
+                put("finalPrice", finalPrice);
+            }
+        });
     }
 
     /**
@@ -147,7 +153,25 @@ public class RideServiceController {
         Optional<Booking> booking = bookingService.approveBooking(bookingId, userEmail);
 
         if (booking.isPresent()) {
-            return ResponseEntity.ok(booking.get());
+            Booking b = booking.get();
+
+            // E-Mail an Rider senden
+            Optional<Ride> ride = rideRepository.findById(b.getRideId());
+            if (ride.isPresent()) {
+                ch.zhaw.shareway.model.Mail mail = new ch.zhaw.shareway.model.Mail();
+                mail.setTo(b.getRiderId());
+                mail.setSubject("ShareWay - Buchung bestätigt!");
+                mail.setMessage(
+                        "Gute Nachrichten!\n\n" +
+                                "Deine Buchung wurde bestätigt.\n\n" +
+                                "Fahrt: " + ride.get().getStartLocation() + " → " + ride.get().getEndLocation() + "\n" +
+                                "Abfahrt: " + ride.get().getDepartureTime() + "\n\n" +
+                                "Viel Spass bei der Fahrt!\n" +
+                                "Dein ShareWay Team");
+                mailService.sendMail(mail);
+            }
+
+            return ResponseEntity.ok(b);
         }
         return ResponseEntity.badRequest().build();
     }
@@ -158,7 +182,24 @@ public class RideServiceController {
         Optional<Booking> booking = bookingService.rejectBooking(bookingId, userEmail);
 
         if (booking.isPresent()) {
-            return ResponseEntity.ok(booking.get());
+            Booking b = booking.get();
+
+            // E-Mail an Rider senden
+            Optional<Ride> ride = rideRepository.findById(b.getRideId());
+            if (ride.isPresent()) {
+                ch.zhaw.shareway.model.Mail mail = new ch.zhaw.shareway.model.Mail();
+                mail.setTo(b.getRiderId());
+                mail.setSubject("ShareWay - Buchung abgelehnt");
+                mail.setMessage(
+                        "Leider wurde deine Buchung abgelehnt.\n\n" +
+                                "Fahrt: " + ride.get().getStartLocation() + " → " + ride.get().getEndLocation() + "\n\n"
+                                +
+                                "Bitte suche nach einer anderen Mitfahrgelegenheit.\n\n" +
+                                "Dein ShareWay Team");
+                mailService.sendMail(mail);
+            }
+
+            return ResponseEntity.ok(b);
         }
         return ResponseEntity.badRequest().build();
     }

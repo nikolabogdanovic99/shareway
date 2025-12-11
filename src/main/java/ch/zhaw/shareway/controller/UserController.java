@@ -35,12 +35,11 @@ public class UserController {
     @PostMapping("/users")
     public ResponseEntity<User> createUser(@RequestBody UserCreateDTO dto) {
         User user = new User(
-            dto.getAuth0Id(),
-            dto.getEmail(),
-            dto.getName(),
-            dto.getRole()
-        );
-        
+                dto.getAuth0Id(),
+                dto.getEmail(),
+                dto.getName(),
+                dto.getRole());
+
         User savedUser = userRepository.save(user);
         return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
     }
@@ -65,30 +64,30 @@ public class UserController {
     public ResponseEntity<User> updateMyProfile(@RequestBody UserProfileUpdateDTO dto) {
         String userEmail = userService.getEmail();
         Optional<User> optUser = userRepository.findByEmail(userEmail);
-        
+
         User user;
-        
+
         if (optUser.isEmpty()) {
             String auth0Id = userService.getAuth0Id();
             String name = userService.getName();
-            
+
             UserRole role;
             if (userService.userHasRole("admin")) {
                 role = UserRole.ADMIN;
             } else {
                 role = UserRole.USER;
             }
-            
+
             user = new User(auth0Id, userEmail, name, role);
         } else {
             user = optUser.get();
         }
-        
+
         user.setFirstName(dto.getFirstName());
         user.setLastName(dto.getLastName());
         user.setProfileImage(dto.getProfileImage());
         user.setPhoneNumber(dto.getPhoneNumber());
-        
+
         User savedUser = userRepository.save(user);
         return new ResponseEntity<>(savedUser, HttpStatus.OK);
     }
@@ -97,23 +96,23 @@ public class UserController {
     public ResponseEntity<User> requestVerification(@RequestBody UserProfileUpdateDTO dto) {
         String userEmail = userService.getEmail();
         Optional<User> optUser = userRepository.findByEmail(userEmail);
-        
+
         if (optUser.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        
+
         User user = optUser.get();
-        
+
         user.setLicenseImageFront(dto.getLicenseImageFront());
         user.setLicenseImageBack(dto.getLicenseImageBack());
-        
+
         if (user.getLicenseImageFront() != null && !user.getLicenseImageFront().isEmpty() &&
-            user.getLicenseImageBack() != null && !user.getLicenseImageBack().isEmpty()) {
+                user.getLicenseImageBack() != null && !user.getLicenseImageBack().isEmpty()) {
             user.setVerificationStatus(VerificationStatus.PENDING);
         } else {
             user.setVerificationStatus(VerificationStatus.UNVERIFIED);
         }
-        
+
         User savedUser = userRepository.save(user);
         return new ResponseEntity<>(savedUser, HttpStatus.OK);
     }
@@ -122,11 +121,24 @@ public class UserController {
     public ResponseEntity<User> getMyUser() {
         String userEmail = userService.getEmail();
         Optional<User> optUser = userRepository.findByEmail(userEmail);
-        
+
         if (optUser.isPresent()) {
             return new ResponseEntity<>(optUser.get(), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            // User existiert nicht -> automatisch erstellen
+            String auth0Id = userService.getAuth0Id();
+            String name = userService.getName();
+
+            UserRole role;
+            if (userService.userHasRole("admin")) {
+                role = UserRole.ADMIN;
+            } else {
+                role = UserRole.USER;
+            }
+
+            User newUser = new User(auth0Id, userEmail, name, role);
+            User savedUser = userRepository.save(newUser);
+            return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
         }
     }
 
@@ -135,7 +147,7 @@ public class UserController {
         if (!userService.userHasRole("admin")) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
-        
+
         List<User> pendingUsers = userRepository.findByVerificationStatus(VerificationStatus.PENDING);
         return new ResponseEntity<>(pendingUsers, HttpStatus.OK);
     }

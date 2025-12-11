@@ -7,9 +7,12 @@
 
 <svelte:head>
   <link rel="icon" href={favicon} />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
 </svelte:head>
 
 <nav class="navbar navbar-expand-lg navbar-shareway">
@@ -44,35 +47,36 @@
               My Bookings
             </a>
           </li>
-          {#if user.user_roles && (user.user_roles.includes("user") || user.user_roles.includes("admin"))}
+          <li class="nav-item">
+            <a class="nav-link" href="/driver">
+              <i class="bi bi-speedometer2 me-1"></i>
+              Driver Dashboard
+            </a>
+          </li>
+          {#if user.user_roles && user.user_roles.includes("admin")}
             <li class="nav-item">
-              <a class="nav-link" href="/driver">
-                <i class="bi bi-speedometer2 me-1"></i>
-                Driver Dashboard
+              <a class="nav-link" href="/admin/verifications">
+                <i class="bi bi-shield-check me-1"></i>
+                Verifications
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/admin/moderation">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                Moderation
               </a>
             </li>
           {/if}
-{#if user.user_roles && user.user_roles.includes("admin")}
-  <li class="nav-item">
-    <a class="nav-link" href="/admin/verifications">
-      <i class="bi bi-shield-check me-1"></i>
-      Verifications
-    </a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href="/admin/moderation">
-      <i class="bi bi-exclamation-triangle me-1"></i>
-      Moderation
-    </a>
-  </li>
-{/if}
         {/if}
       </ul>
       <div class="d-flex align-items-center gap-2">
         {#if isAuthenticated}
           <a href="/account" class="nav-link d-flex align-items-center gap-2">
-            <div class="avatar" style="width: 32px; height: 32px; font-size: 0.875rem;">
-              {user.name?.charAt(0) || 'U'}
+            <div
+              class="avatar"
+              style="width: 32px; height: 32px; font-size: 0.875rem;"
+            >
+              {user.name?.charAt(0) || "U"}
             </div>
             <span class="d-none d-lg-inline">{user.name}</span>
           </a>
@@ -87,9 +91,7 @@
             <i class="bi bi-box-arrow-in-right me-1"></i>
             Login
           </a>
-          <a href="/signup" class="btn btn-outline-light">
-            Sign Up
-          </a>
+          <a href="/signup" class="btn btn-outline-light"> Sign Up </a>
         {/if}
       </div>
     </div>
@@ -115,9 +117,21 @@
       <div class="col-md-4 mb-3 mb-md-0">
         <h6>Quick Links</h6>
         <ul class="list-unstyled mb-0">
-          <li><a href="/rides"><i class="bi bi-chevron-right me-1"></i>Find Rides</a></li>
-          <li><a href="/driver"><i class="bi bi-chevron-right me-1"></i>Offer a Ride</a></li>
-          <li><a href="/account"><i class="bi bi-chevron-right me-1"></i>My Account</a></li>
+          <li>
+            <a href="/rides"
+              ><i class="bi bi-chevron-right me-1"></i>Find Rides</a
+            >
+          </li>
+          <li>
+            <a href="/driver"
+              ><i class="bi bi-chevron-right me-1"></i>Offer a Ride</a
+            >
+          </li>
+          <li>
+            <a href="/account"
+              ><i class="bi bi-chevron-right me-1"></i>My Account</a
+            >
+          </li>
         </ul>
       </div>
       <div class="col-md-4">
@@ -128,7 +142,7 @@
         </ul>
       </div>
     </div>
-    <hr class="my-3" style="border-color: rgba(255,255,255,0.1);">
+    <hr class="my-3" style="border-color: rgba(255,255,255,0.1);" />
     <div class="text-center text-white-50">
       <small>© 2025 ShareWay. All rights reserved.</small>
     </div>
