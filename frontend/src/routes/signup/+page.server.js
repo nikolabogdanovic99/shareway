@@ -1,17 +1,26 @@
 import { redirect } from '@sveltejs/kit';
 import auth from '$lib/server/auth.service.js';
+import axios from 'axios';
+import 'dotenv/config';
+
+const API_BASE_URL = process.env.API_BASE_URL;
 
 export const actions = {
-  signup: async ({ request, cookies }) => {
+  default: async ({ request, cookies }) => {
     const data = await request.formData();
     const email = data.get('email');
     const password = data.get('password');
-    const firstName = data.get('firstName');
-    const lastName = data.get('lastName');
 
     try {
-      // Call the auth.js signup function - it handles cookie setting
-      await auth.signup(email, password, firstName, lastName, cookies);
+      const result = await auth.signup(email, password, null, null, cookies);
+      
+      // User in DB erstellen
+      await axios({
+        method: "get",
+        url: `${API_BASE_URL}/api/users/me`,
+        headers: { Authorization: "Bearer " + result.jwt_token }
+      });
+      
     } catch (error) {
       console.error('Signup error:', error);
       return {
@@ -19,7 +28,6 @@ export const actions = {
       };
     }
     
-    // If we get here, signup was successful - redirect
-    throw redirect(303, '/');
+    throw redirect(302, '/');
   }
 };

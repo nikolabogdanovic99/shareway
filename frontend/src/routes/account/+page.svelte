@@ -136,6 +136,7 @@
   const canRequestVerification = $derived(
     isProfileComplete && licenseImageFront && licenseImageBack,
   );
+  const canSaveProfile = $derived(firstName.trim() && lastName.trim());
 </script>
 
 <h1 class="mt-3">Account Details</h1>
@@ -234,7 +235,9 @@
             <p class="mb-1"><strong>First Name:</strong> {firstName || "-"}</p>
             <p class="mb-1"><strong>Last Name:</strong> {lastName || "-"}</p>
             <p class="mb-1">
-              <strong>Phone:</strong> {phoneNumber ? "+41 " + phoneNumber : "-"}</p>
+              <strong>Phone:</strong>
+              {phoneNumber ? "+41 " + phoneNumber : "-"}
+            </p>
           </div>
         </div>
         {#if !isProfileComplete}
@@ -324,7 +327,17 @@
             </div>
           {/if}
 
-          <button type="submit" class="btn btn-primary">Save</button>
+          {#if !canSaveProfile}
+            <div class="alert alert-info mb-3">
+              First name and last name are required.
+            </div>
+          {/if}
+
+          <button
+            type="submit"
+            class="btn btn-primary"
+            disabled={!canSaveProfile}>Save</button
+          >
           <button
             type="button"
             class="btn btn-secondary ms-2"

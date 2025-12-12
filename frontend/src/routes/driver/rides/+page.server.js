@@ -15,6 +15,7 @@ export async function load({ locals }) {
     const userEmail = user_info?.email || '';
     let vehicles = [];
     let rides = [];
+    let loadError = null;
 
     try {
         const [vehiclesRes, ridesRes] = await Promise.all([
@@ -26,9 +27,10 @@ export async function load({ locals }) {
         rides = (ridesRes.data.content || []).filter(r => r.driverId === userEmail);
     } catch (err) {
         console.log('Error loading data:', err);
+        loadError = 'Could not load your rides and vehicles. Please try again.';
     }
 
-    return { vehicles, rides };
+    return { vehicles, rides, error: loadError };
 }
 
 export const actions = {
@@ -64,7 +66,7 @@ export const actions = {
             return { success: true, action: 'ride' };
         } catch (err) {
             console.log('Error creating ride:', err);
-            return { success: false, error: 'Could not create ride' };
+            return { success: false, error: 'Could not create ride. Please try again.' };
         }
     },
 
@@ -87,7 +89,7 @@ export const actions = {
             return { success: true, action: 'deleteRide' };
         } catch (err) {
             console.log('Error deleting ride:', err);
-            return { success: false, error: 'Could not delete ride' };
+            return { success: false, error: 'Could not delete ride. Please try again.' };
         }
     }
 };

@@ -1,5 +1,6 @@
 package ch.zhaw.shareway.controller;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ch.zhaw.shareway.model.Ride;
 import ch.zhaw.shareway.model.RideCreateDTO;
 import ch.zhaw.shareway.model.RideStatus;
+import ch.zhaw.shareway.model.RideUpdateDTO;
 import ch.zhaw.shareway.repository.BookingRepository;
 import ch.zhaw.shareway.repository.RideRepository;
 import ch.zhaw.shareway.service.RideService;
@@ -43,7 +46,7 @@ public class RideController {
     @PostMapping("/rides")
     public ResponseEntity<Ride> createRide(@RequestBody RideCreateDTO rideDTO) {
         // Nur user oder admin dürfen Rides erstellen
-        if (!userService.userHasRole("user") && !userService.userHasRole("admin")) {
+        if (!userService.canCreateRides()) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
@@ -138,5 +141,36 @@ public class RideController {
 
         rideRepository.deleteById(id);
         return ResponseEntity.status(HttpStatus.OK).body("DELETED");
+    }
+
+    @PutMapping("/rides/{id}")
+    public ResponseEntity<Ride> updateRide(
+            @PathVariable String id,
+            @RequestBody RideUpdateDTO dto) {
+
+        Optional<Ride> existingRide = rideRepository.findById(id);
+        if (existingRide.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Ride ride = existingRide.get();
+
+        String userEmail = userService.getEmail();
+        boolean isAdmin = userService.userHasRole("admin");
+
+        if (!ride.getDriverId().equals(userEmail) && !isAdmin) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
+        if (ride.getStatus() != RideStatus.OPEN) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        ride.setDepartureTime(LocalDateTime.parse(dto.getDepartureTime()));
+        ride.setPricePerSeat(dto.getPricePerSeat());
+        ride.setDescription(dto.getDescription());
+        ride.setRouteRadiusKm(dto.getRouteRadiusKm());
+
+        return ResponseEntity.ok(rideRepository.save(ride));
     }
 }

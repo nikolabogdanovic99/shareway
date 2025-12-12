@@ -67,9 +67,4 @@ public class User {
         return firstName != null && !firstName.isEmpty() &&
                 lastName != null && !lastName.isEmpty();
     }
-
-    // Kann Rides erstellen wenn verifiziert
-    public boolean canCreateRides() {
-        return verificationStatus == VerificationStatus.VERIFIED;
-    }
 }

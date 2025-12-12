@@ -11,6 +11,7 @@ import com.mongodb.DBObject;
  
 @RestController 
 public class MongoTestController { 
+    
     @Autowired 
     private MongoTemplate mongoTemplate; 
  

@@ -1,6 +1,6 @@
 import axios from "axios";
 // Load environment variables from .env file for local development
-import 'dotenv/config'; 
+import 'dotenv/config';
 const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN;
 const AUTH0_CLIENT_ID = process.env.AUTH0_CLIENT_ID
 
@@ -40,13 +40,13 @@ async function signup(
 
   try {
     const response = await axios(options);
-    
+
     // wait 2 seconds. Explanation: The user roles are set automatically on signup,
     // but we have to wait a short amount of time to make sure that the roles are
     // stored in the database of auth0. Otherwise the roles may not be in the
     // userinfo object on the first login.
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     return await login(email, password, cookies);
   } catch (error) {
     throw error;
@@ -72,10 +72,10 @@ async function login(username, password, cookies) {
     const { id_token, access_token } = response.data;
 
     console.log(id_token);
-    
+
     // Get user info and set cookies
     const userInfo = await getUserInfo(access_token);
-    
+
     // Set cookies via SvelteKit cookies API
     cookies.set('jwt_token', id_token, {
       path: '/',
@@ -84,7 +84,7 @@ async function login(username, password, cookies) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production'
     });
-    
+
     cookies.set('user_info', JSON.stringify(userInfo), {
       path: '/',
       maxAge: 60 * 60 * 24 * 7, // 7 days
@@ -92,8 +92,8 @@ async function login(username, password, cookies) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production'
     });
-    
-    return { success: true };
+
+    return { success: true, jwt_token: id_token };
   } catch (error) {
     throw error;
   }

@@ -22,9 +22,8 @@ public class RideScheduler {
     public void autoCompleteRides() {
         LocalDateTime now = LocalDateTime.now();
 
-        // Alle OPEN oder IN_PROGRESS Rides holen
+        // Alle OPEN Rides holen
         List<Ride> openRides = rideRepository.findByStatus(RideStatus.OPEN);
-        List<Ride> inProgressRides = rideRepository.findByStatus(RideStatus.IN_PROGRESS);
 
         // OPEN Rides prüfen
         for (Ride ride : openRides) {
@@ -35,14 +34,7 @@ public class RideScheduler {
             }
         }
 
-        // IN_PROGRESS Rides prüfen
-        for (Ride ride : inProgressRides) {
-            if (shouldComplete(ride, now)) {
-                ride.setStatus(RideStatus.COMPLETED);
-                rideRepository.save(ride);
-                System.out.println("Auto-completed ride: " + ride.getId());
-            }
-        }
+
     }
 
     private boolean shouldComplete(Ride ride, LocalDateTime now) {

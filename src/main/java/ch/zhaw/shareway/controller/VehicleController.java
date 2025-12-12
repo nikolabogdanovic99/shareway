@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,13 +53,21 @@ public class VehicleController {
         return new ResponseEntity<>(allVehicles, HttpStatus.OK);
     }
 
-    @GetMapping("/vehicles/{id}")
-    public ResponseEntity<Vehicle> getVehicleById(@PathVariable String id) {
-        Optional<Vehicle> optVehicle = vehicleRepository.findById(id);
-        if (optVehicle.isPresent()) {
-            return new ResponseEntity<>(optVehicle.get(), HttpStatus.OK);
-        } else {
+    @DeleteMapping("/vehicles/{id}")
+    public ResponseEntity<String> deleteVehicle(@PathVariable String id) {
+        Optional<Vehicle> vehicle = vehicleRepository.findById(id);
+
+        if (vehicle.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+
+        // Nur Owner darf löschen
+        String userEmail = userService.getEmail();
+        if (!vehicle.get().getOwnerId().equals(userEmail)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
+        vehicleRepository.deleteById(id);
+        return ResponseEntity.ok("DELETED");
     }
 }

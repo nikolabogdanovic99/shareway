@@ -32,32 +32,10 @@ public class UserController {
     @Autowired
     UserService userService;
 
-    @PostMapping("/users")
-    public ResponseEntity<User> createUser(@RequestBody UserCreateDTO dto) {
-        User user = new User(
-                dto.getAuth0Id(),
-                dto.getEmail(),
-                dto.getName(),
-                dto.getRole());
-
-        User savedUser = userRepository.save(user);
-        return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
-    }
-
     @GetMapping("/users")
     public ResponseEntity<List<User>> getAllUsers() {
         List<User> allUsers = userRepository.findAll();
         return new ResponseEntity<>(allUsers, HttpStatus.OK);
-    }
-
-    @GetMapping("/users/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable String id) {
-        Optional<User> optUser = userRepository.findById(id);
-        if (optUser.isPresent()) {
-            return new ResponseEntity<>(optUser.get(), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
     }
 
     @PutMapping("/users/me/profile")

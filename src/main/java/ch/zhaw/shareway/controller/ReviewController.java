@@ -106,24 +106,6 @@ public class ReviewController {
         return new ResponseEntity<>(savedReview, HttpStatus.CREATED);
     }
 
-    // GET /api/reviews - Alle Bewertungen
-    @GetMapping("/reviews")
-    public ResponseEntity<List<Review>> getAllReviews() {
-        List<Review> allReviews = reviewRepository.findAll();
-        return new ResponseEntity<>(allReviews, HttpStatus.OK);
-    }
-
-    // GET /api/reviews/{id} - Bewertung by ID
-    @GetMapping("/reviews/{id}")
-    public ResponseEntity<Review> getReviewById(@PathVariable String id) {
-        Optional<Review> optReview = reviewRepository.findById(id);
-        if (optReview.isPresent()) {
-            return new ResponseEntity<>(optReview.get(), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
-
     // GET /api/reviews/ride/{rideId} - Reviews für eine Ride
     @GetMapping("/reviews/ride/{rideId}")
     public ResponseEntity<List<Review>> getReviewsByRide(@PathVariable String rideId) {
