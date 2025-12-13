@@ -1,3 +1,7 @@
+![Workflow](https://github.com/nikolabogdanovic99/shareway/actions/workflows/ci-badge.yml/badge.svg)
+![Coverage](https://github.com/nikolabogdanovic99/shareway/blob/main/.github/badges/jacoco.svg)
+![Branches](https://github.com/nikolabogdanovic99/shareway/blob/main/.github/badges/branches.svg)
+
 # ShareWay
 
 ShareWay ist eine Mitfahr-App für die Schweiz, bei der Fahrer Fahrten anbieten und Mitfahrer verfügbare Fahrten suchen und buchen können.
